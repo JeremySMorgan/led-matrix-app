@@ -1,8 +1,0 @@
-#echo $whoami
-#echo "$USER"
-#/home/pi/Desktop/led_interface/ngrok http -subdomain=led_interface 5000 > /dev/null &
-#python ~/Desktop/led_interface/app.py 
-
-
-/home/pi/Desktop/led_interface/ngrok http -subdomain=led_interface 5000 &
-python ~/Desktop/led_interface/app.py 
