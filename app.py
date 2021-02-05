@@ -1,37 +1,66 @@
 #!/usr/bin/env python
-import threading
+from threading import Thread
 from led_matrix_writer import LedWriter
 from flask import Flask
 from flask import request
 import time
+import psutil
+
 app = Flask(__name__)
 led_writer = LedWriter()
+newest_request_t = 0
+
+# App wide constants
+CLEAR_TIME_SECS = 30.0*60.0
 
 @app.route("/")
-def hello():
+def index():
     print request.data
-    return "Hello World!"
+    return "RPi online"
 
-@app.route('/LED', methods=['GET', 'POST'])
+@app.route('/LED', methods=['POST'])
 def parse_request():
-    colors = led_writer.parse_request(request.values)
-    led_writer.save_colors(colors)
-    led_writer.set_colors(colors)
+    
+    print "\n parsing request to \\LED"
+    
+    try:
+        colors = led_writer.parse_request(request.json)
+        led_writer.save_colors(colors)
+        led_writer.set_colors (colors)
+        thread = Thread(target=clear_led_thread)
+        thread.start()
+        #thread.join()
+        
+    except Exception as e:
+        print "error: ", e.message
+        return 'Error parsing request'
+        
     return 'OK'
 
-def loop_thread():
-    delay = .08
-    sum_t = 0
-    t=0
-    while t < sum_t:
-        led_writer.write_saved_colors()
-        time.sleep(delay)
-        t += delay
-        if (t - int(t)) <.1:
-            print int(t)
- 
+@app.route('/shutdown', methods=['GET', 'POST'])
+def shutdown():
+    print "shutdown called"
+    led_writer.clear_colors()
+    #PROCNAME = "ngrok" 
+    #for proc in psutil.process_iter():
+    #    if proc.name() == PROCNAME:
+    #        proc.kill()
+    return 'shutdown'
+
+def clear_led_thread():
+    global newest_request_t
+    request_t = time.time()
+    newest_request_t = request_t
+    time.sleep(CLEAR_TIME_SECS)
+    if newest_request_t == request_t:        
+        print "clearing colors"
+        led_writer.clear_colors()
+    else:
+        print "new request recieved during sleeping period"
+    
 if __name__ == "__main__":
-    thread_ = threading.Thread(group=None, target=loop_thread,name="XASDF")
-    thread_.start()
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    except Exception:
+        print("Socket already in use, exiting()")
  

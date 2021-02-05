@@ -116,7 +116,6 @@ class APA102:
     Todo: More than 1024 LEDs requires more than one xfer operation.
     """
     def show(self):
-        print "show called "
         self.clockStartFrame()
         self.spi.xfer2(self.leds) # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs. 
         self.clockEndFrame()
