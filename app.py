@@ -4,6 +4,8 @@ from flask import Flask
 from flask import request
 import time
 import psutil
+import datetime
+
 
 app = Flask(__name__)
 led_writer = LedWriter()
@@ -58,11 +60,17 @@ def clear_led_thread():
         print("new request recieved during sleeping period")
     
 if __name__ == "__main__":
+
+    now = datetime.datetime.now()
+    now_str = now.strftime('%a %I:%M:%S %p')
+    print(f"starting app.py at: {now_str}")
+        
     try:
         #app.run(debug=True)
+        
         while True:
-            time.sleep(.1)
-            print("in app.py")
+            time.sleep(.25)
+            print(f"in app.py (started at: {now_str})")
     except Exception:
         print("Socket already in use, exiting()")
  
