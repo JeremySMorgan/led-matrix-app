@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from threading import Thread
 from led_matrix_writer import LedWriter
 from flask import Flask
@@ -15,13 +14,13 @@ CLEAR_TIME_SECS = 30.0*60.0
 
 @app.route("/")
 def index():
-    print request.data
+    print(request.data)
     return "RPi online"
 
 @app.route('/LED', methods=['POST'])
 def parse_request():
     
-    print "\n parsing request to \\LED"
+    print("\n parsing request to \\LED")
     
     try:
         colors = led_writer.parse_request(request.json)
@@ -32,14 +31,14 @@ def parse_request():
         #thread.join()
         
     except Exception as e:
-        print "error: ", e.message
+        print("error: ", e.message)
         return 'Error parsing request'
         
     return 'OK'
 
 @app.route('/shutdown', methods=['GET', 'POST'])
 def shutdown():
-    print "shutdown called"
+    print("shutdown called")
     led_writer.clear_colors()
     #PROCNAME = "ngrok" 
     #for proc in psutil.process_iter():
@@ -53,10 +52,10 @@ def clear_led_thread():
     newest_request_t = request_t
     time.sleep(CLEAR_TIME_SECS)
     if newest_request_t == request_t:        
-        print "clearing colors"
+        print("clearing colors")
         led_writer.clear_colors()
     else:
-        print "new request recieved during sleeping period"
+        print("new request recieved during sleeping period")
     
 if __name__ == "__main__":
     try:
