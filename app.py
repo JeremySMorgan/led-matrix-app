@@ -59,7 +59,10 @@ def clear_led_thread():
     
 if __name__ == "__main__":
     try:
-        app.run(debug=True)
+        #app.run(debug=True)
+        while True:
+            time.sleep(.1)
+            print("in app.py")
     except Exception:
         print("Socket already in use, exiting()")
  
