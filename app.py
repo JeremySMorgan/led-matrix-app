@@ -30,7 +30,6 @@ def parse_request():
         led_writer.set_colors (colors)
         thread = Thread(target=clear_led_thread)
         thread.start()
-        #thread.join()
         
     except Exception as e:
         print("error: ", e.message)
@@ -42,10 +41,6 @@ def parse_request():
 def shutdown():
     print("shutdown called")
     led_writer.clear_colors()
-    #PROCNAME = "ngrok" 
-    #for proc in psutil.process_iter():
-    #    if proc.name() == PROCNAME:
-    #        proc.kill()
     return 'shutdown'
 
 def clear_led_thread():
@@ -53,7 +48,7 @@ def clear_led_thread():
     request_t = time.time()
     newest_request_t = request_t
     time.sleep(CLEAR_TIME_SECS)
-    if newest_request_t == request_t:        
+    if newest_request_t == request_t:
         print("clearing colors")
         led_writer.clear_colors()
     else:
@@ -66,11 +61,7 @@ if __name__ == "__main__":
     print(f"starting app.py at: {now_str}")
         
     try:
-        #app.run(debug=True)
-        
-        while True:
-            time.sleep(.25)
-            print(f"in app.py (started at: {now_str})")
+        app.run(debug=True)
     except Exception:
         print("Socket already in use, exiting()")
  

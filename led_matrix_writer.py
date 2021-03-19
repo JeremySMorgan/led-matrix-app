@@ -1,3 +1,4 @@
+from typing import List
 import apa102
 
 BOARD_WIDTH = 28
@@ -11,7 +12,8 @@ class LedWriter(object):
         self.colors = None
     
     def parse_request(self, req_json):
-        
+        """ Parse a json of rgb values, returns a list of colors
+        """
         colors = []
         for cell in req_json["data"]:
             rgb = [cell["r"], cell["g"], cell["b"]]
@@ -37,6 +39,5 @@ class LedWriter(object):
         for color in colors:
             self.strip.setPixelRGB(i, color)
             i += 1
-        
         self.strip.show()
 

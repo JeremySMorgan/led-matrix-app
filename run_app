@@ -1,2 +1,0 @@
-##! /bin/sh
-python /home/pi/Desktop/led_interface/app.py &
