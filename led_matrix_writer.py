@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import apa102
 
 BOARD_WIDTH = 28
@@ -9,9 +9,8 @@ class LedWriter(object):
     def __init__(self):
         self.num_leds = BOARD_WIDTH*BOARD_HEIGHT
         self.strip = apa102.APA102(self.num_leds)
-        self.colors = None
-    
-    def parse_request(self, req_json):
+
+    def parse_request(self, req_json) -> List[int]:
         """ Parse a json of rgb values, returns a list of colors
         """
         colors = []
@@ -22,20 +21,18 @@ class LedWriter(object):
         return colors
     
     def clear_colors(self):
+        """ Clear the led matrix
+        """
         self.strip.clearStrip()
     
-    def save_colors(self,colors):
-        self.colors = colors
-        
-    def write_saved_colors(self):
-        if self.colors:
-            self.set_colors(self.colors)
-    
-    def color_from_rgb(self, rgb):
+    def color_from_rgb(self, rgb: Tuple[int, int, int]) -> int:
         return self.strip.combineColor(rgb[0], rgb[1], rgb[2])
             
-    def set_colors(self,colors):
-        i = 0;
+    def write_colors(self, colors: List[int]):
+        """ Write the colors to the led matrix. 
+        """
+        # TODO(@jeremysm): Write colors by each led's x/y position
+        i = 0
         for color in colors:
             self.strip.setPixelRGB(i, color)
             i += 1

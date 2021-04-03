@@ -3,9 +3,7 @@ from led_matrix_writer import LedWriter
 from flask import Flask
 from flask import request
 import time
-import psutil
 import datetime
-
 
 app = Flask(__name__)
 led_writer = LedWriter()
@@ -17,7 +15,7 @@ CLEAR_TIME_SECS = 30.0*60.0
 @app.route("/")
 def index():
     print(request.data)
-    return "RPi online"
+    return "OK"
 
 @app.route('/LED', methods=['POST'])
 def parse_request():
@@ -26,8 +24,7 @@ def parse_request():
     
     try:
         colors = led_writer.parse_request(request.json)
-        led_writer.save_colors(colors)
-        led_writer.set_colors (colors)
+        led_writer.write_colors(colors)
         thread = Thread(target=clear_led_thread)
         thread.start()
         
@@ -35,7 +32,7 @@ def parse_request():
         print("error: ", e.message)
         return 'Error parsing request'
         
-    return 'OK'
+    return "OK"
 
 @app.route('/shutdown', methods=['GET', 'POST'])
 def shutdown():
@@ -44,6 +41,9 @@ def shutdown():
     return 'shutdown'
 
 def clear_led_thread():
+    """ Function that clears the led every `CLEAR_TIME_SECS` seconds. Function is blocking so
+    should be called in its own thread
+    """
     global newest_request_t
     request_t = time.time()
     newest_request_t = request_t

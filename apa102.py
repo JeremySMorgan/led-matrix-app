@@ -129,7 +129,7 @@ class APA102:
     """
      Make one 3*8 byte color value
     """
-    def combineColor(self, red, green, blue):
+    def combineColor(self, red, green, blue) -> int:
         return (red << 16) + (green << 8) + blue
 
     """
