@@ -14,32 +14,29 @@ CLEAR_TIME_SECS = 30.0*60.0
 
 @app.route("/")
 def index():
-    print(request.data)
-    return "OK"
+    print("/ reached")
+    return {"status": "OK"}
 
 @app.route('/LED', methods=['POST'])
 def parse_request():
-    
-    print("\n parsing request to \\LED")
-    
+    print("/LED reached")
     try:
         colors = led_writer.parse_request(request.json)
         led_writer.write_colors(colors)
         thread = Thread(target=clear_led_thread)
         thread.start()
-        
     except Exception as e:
         print("error: ", e.message)
-        return 'Error parsing request'
-        
-    return "OK"
+        return {"status": "error"}
+    return {"status": "OK"}
 
 @app.route('/shutdown', methods=['GET', 'POST'])
 def shutdown():
-    print("shutdown called")
+    print("/shutdown reached")
     led_writer.clear_colors()
-    return 'shutdown'
-
+    # TODO(@jeremysm): exit app when reached
+    return {"status": "OK"}
+    
 def clear_led_thread():
     """ Function that clears the led every `CLEAR_TIME_SECS` seconds. Function is blocking so
     should be called in its own thread
@@ -59,9 +56,7 @@ if __name__ == "__main__":
     now = datetime.datetime.now()
     now_str = now.strftime('%a %I:%M:%S %p')
     print(f"starting app.py at: {now_str}")
-        
     try:
-        app.run(debug=True)
-    except Exception:
-        print("Socket already in use, exiting()")
- 
+        app.run(debug=True, use_reloader=False)
+    except Exception as e:
+        print("Error running app:", e.msg)
