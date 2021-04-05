@@ -14,11 +14,15 @@ CLEAR_TIME_SECS = 30.0*60.0
 
 @app.route("/")
 def index():
+    """ / Endpoint 
+    """
     print("/ reached")
     return {"status": "OK"}
 
 @app.route('/LED', methods=['POST'])
 def parse_request():
+    """ Parse a design and write to the led matrix
+    """
     print("/LED reached")
     try:
         colors = led_writer.parse_request(request.json)
@@ -26,12 +30,14 @@ def parse_request():
         thread = Thread(target=clear_led_thread)
         thread.start()
     except Exception as e:
-        print("error: ", e.message)
+        print("Error parseing /LED request: {e}")
         return {"status": "error"}
     return {"status": "OK"}
 
 @app.route('/shutdown', methods=['GET', 'POST'])
 def shutdown():
+    """ Kill the server and exit
+    """
     print("/shutdown reached")
     led_writer.clear_colors()
     # TODO(@jeremysm): exit app when reached
@@ -59,4 +65,4 @@ if __name__ == "__main__":
     try:
         app.run(debug=True, use_reloader=False)
     except Exception as e:
-        print("Error running app:", e.msg)
+        print(f"Error running app: {e}")
