@@ -5,8 +5,11 @@ from flask import request
 import time
 import datetime
 
+PORT = 5000
 app = Flask(__name__)
-led_writer = LedWriter()
+BRIGHTNESS = 10
+
+led_writer = LedWriter(BRIGHTNESS)
 newest_request_t = 0
 
 # App wide constants
@@ -68,8 +71,5 @@ def _now_str() -> str:
 if __name__ == "__main__":
 
     print(f"Starting app.py, current time: {_now_str()}")
-    app.run(debug=True, use_reloader=False)
-    # try:
-    #
-    # except Exception as e:
-    #    print(f"Error running app: {e}")
+    app.run(debug=True, port=PORT, use_reloader=False)
+
