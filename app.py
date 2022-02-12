@@ -1,5 +1,5 @@
 from threading import Thread
-from led_matrix_writer import LedWriter
+from src.led_writer import LedWriter
 from flask import Flask
 from flask import request
 import time
@@ -10,7 +10,8 @@ led_writer = LedWriter()
 newest_request_t = 0
 
 # App wide constants
-CLEAR_TIME_SECS = 30.0*60.0
+#CLEAR_TIME_SECS = 30.0*60.0
+CLEAR_TIME_SECS = 10
 
 @app.route("/")
 def index():
@@ -57,12 +58,16 @@ def clear_led_thread():
     else:
         print("new request recieved during sleeping period")
     
+def _now_str() -> str:
+    now = datetime.datetime.now()
+    return now.strftime('%a %I:%M:%S %p')
+    
+    
 if __name__ == "__main__":
 
-    now = datetime.datetime.now()
-    now_str = now.strftime('%a %I:%M:%S %p')
-    print(f"starting app.py at: {now_str}")
-    try:
-        app.run(debug=True, use_reloader=False)
-    except Exception as e:
-        print(f"Error running app: {e}")
+    print(f"Starting app.py, current time: {_now_str()}")
+    app.run(debug=True, use_reloader=False)
+    #try:
+    #    
+    #except Exception as e:
+    #    print(f"Error running app: {e}")

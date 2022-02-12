@@ -1,4 +1,7 @@
-import apa102
+import os
+import sys
+sys.path.append(os.getcwd())
+from src import apa102
 
 try:
     num_leds = 28*28
@@ -8,7 +11,7 @@ try:
     color = 0xFF0000  # 'On' color (starts red)
 
     while True:  # Loop forever
-
+        
         strip.setPixelRGB(head, color)  # Turn on 'head' pixel
         strip.setPixelRGB(tail, 0)  # Turn off 'tail'
         strip.show()  # Refresh strip
@@ -20,7 +23,9 @@ try:
             if(color == 0): color = 0xFF0000  # If black, reset to red
 
         tail += 1  # Advance tail position
-        if(tail >= 432): tail = 0  # Off end? Reset
+        if(tail >= 432): 
+            tail = 0  # Off end? Reset
+
 
 except KeyboardInterrupt:  # Abbruch...
     print('Interrupted...')

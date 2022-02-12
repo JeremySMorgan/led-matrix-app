@@ -1,4 +1,8 @@
-import apa102
+from time import sleep
+import os
+import sys
+sys.path.append(os.getcwd())
+from src import apa102
 
 """
 Chase a segment of LEDs round the strip
@@ -20,7 +24,8 @@ try:
                     strip.setPixelRGB(i+q+4, index);
                     strip.setPixelRGB(i+q+5, index);
                     strip.setPixelRGB(i+q+6, index); # Wrap, if we are at the end of the strip
-                strip.show()    
+                strip.show()
+                sleep(0.1)
 
 except KeyboardInterrupt:  # Abbruch...
     print('Interrupted...')

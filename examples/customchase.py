@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-import apa102
+
+
+import os
+import sys
+sys.path.append(os.getcwd())
+from src import apa102
+
 import buttons
 
 from sys import argv

@@ -95,8 +95,10 @@ class APA102:
     """
     def setPixel(self, ledNum, red, green, blue):
         if ledNum < 0:
+            print("setPixel() ignoring pixel:", ledNum)
             return # Pixel is invisible, so ignore
         if ledNum >= self.numLEDs:
+            print("setPixel() ignoring pixel:", ledNum)
             return # again, invsible
         startIndex = 4 * ledNum
         self.leds[startIndex] = self.ledstart
@@ -104,6 +106,14 @@ class APA102:
         self.leds[startIndex+1] = green
         self.leds[startIndex+2] = blue
         
+    def print_buffer(self, n: int=25):
+        """ Print out the first `n` values in the buffer
+        """
+        print("Apa102 buffer:")
+        for i in range(n):
+            print(f"  {i}:", self.leds[i*4: i*4+4])
+           
+    
     """
     Sets the color of one pixel in the LED stripe. The changed pixel is not shown yet on the Stripe, it is only
     written to the pixel buffer. Colors are passed combined (3 bytes concatenated)
@@ -115,11 +125,16 @@ class APA102:
     Sends the content of the pixel buffer to the strip.
     Todo: More than 1024 LEDs requires more than one xfer operation.
     """
-    def show(self):
+    def show(self, save_buffer: bool = False):
         self.clockStartFrame()
+        
+        if save_buffer:
+            curr_leds = self.leds.copy()
         self.spi.xfer2(self.leds) # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs. 
+        if save_buffer:
+            self.leds = curr_leds 
         self.clockEndFrame()
-
+        
     """
     This method should be called at the end of a program in order to release the SPI device
     """

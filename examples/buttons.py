@@ -1,5 +1,8 @@
 import RPi.GPIO as gpio
 import os
+import sys
+sys.path.append(os.getcwd())
+from src import apa102
 from time import clock
 
 REBOOT_PIN = 22
