@@ -9,8 +9,6 @@ BOARD_HEIGHT = 28
 
 @dataclass
 class Cell:
-    x: int
-    y: int
     r: int
     g: int
     b: int
@@ -26,8 +24,8 @@ class Cell:
         self.b = 0
 
     def __post_init__(self):
-        assert isinstance(self.x, int)
-        assert isinstance(self.y, int)
+        #assert isinstance(self.x, int)
+        #assert isinstance(self.y, int)
         assert isinstance(self.led_idx, int)
         assert isinstance(self.r, int)
         assert isinstance(self.g, int)
@@ -85,11 +83,13 @@ def xy_to_led_idx(x: int, y: int) -> int:
     return BOARD_WIDTH * x + y
 
 
-def parse_request(self, req_json: Dict) -> List[Cell]:
+def parse_http_data(req_json: Dict) -> List[Cell]:
     """Parse a json of rgb values, returns a list of colors"""
     colors = []
-    for data in req_json["data"]:
-        led_idx = xy_to_led_idx(int(data["x"]), int(data["y"]))
+    for idx, data in enumerate(req_json["data"]):
+        # TODO(@jstmn): Get led_idx from x, y
+        #led_idx = xy_to_led_idx(int(data["x"]), int(data["y"]))
+        led_idx = idx
         cell = Cell(
             r=int(data["r"]),
             g=int(data["g"]),
