@@ -23,12 +23,11 @@ def _now_str() -> str:
 
 @app.route("/")
 def index():
-    """/ Endpoint"""
     print("/ reached")
     return {"status": "OK"}
 
 
-@app.route("/LED", methods=["POST"])
+@app.route("/led", methods=["POST"])
 def parse_request():
     """Parse a design and write to the led matrix"""
     print("/LED reached")
@@ -74,7 +73,6 @@ def clear_led_thread():
 
 
 if __name__ == "__main__":
-
     print(f"Starting app.py, current time: {_now_str()}")
     app.run(debug=True, port=PORT, use_reloader=False)
 
