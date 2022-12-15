@@ -10,7 +10,7 @@ from src.led_writer import LedWriter, Cell
 
 def main(led_writer: LedWriter):
 
-    led_writer.clear_colors()
+    led_writer.clear()
     colors = []
     n_leds = led_writer.num_leds
     counter = 0
@@ -18,14 +18,16 @@ def main(led_writer: LedWriter):
     while True:
 
         i = counter % n_leds
-        r = 0  # 128 +128 * sin(i * 2*pi/n_leds)
+        r = 128 +127 * sin(i * 2*pi/n_leds)
         g = 256 * (cos(i * 2 * pi / n_leds + 2 * pi / 3) ** 2)
         b = 0
-        color = Cell(r=int(r), g=int(g), b=int(b), x=0, y=0)
+        color = Cell(r=int(r), g=int(g), b=int(b), led_idx=i)
+        
         print(color)
+        
         colors.append(color)
 
-        led_writer.write_colors(colors)
+        led_writer.write(colors)
         colors.append(color)
 
         counter += 1
@@ -39,4 +41,5 @@ if __name__ == "__main__":
     try:
         main(led_writer)
     except KeyboardInterrupt:
-        led_writer.clear_colors()
+        led_writer.clear()
+        time.sleep()

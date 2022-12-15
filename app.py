@@ -1,5 +1,5 @@
 from threading import Thread
-from src.led_writer import LedWriter, parse_http_data
+from src.led_writer import LedWriter
 from flask import Flask
 from flask import request
 import time
@@ -14,8 +14,7 @@ led_writer = LedWriter(BRIGHTNESS)
 newest_request_t = 0
 
 # App wide constants
-# CLEAR_TIME_SECS = 30.0*60.0
-CLEAR_TIME_SECS = 10
+CLEAR_TIME_SECS = 30.0*60.0
 
 def _now_str() -> str:
     now = datetime.datetime.now()
@@ -30,15 +29,9 @@ def index():
 @app.route("/led", methods=["POST"])
 def parse_request():
     """Parse a design and write to the led matrix"""
-    print("/LED reached")
-    try:
-        # Save requests
-        with open("example_requests/request_" + _now_str() + ".pickle", "wb") as f:
-            import pickle
-            pickle.dump(request.json, f)
-        
-        cells = parse_http_data(request.json)
-        led_writer.write(cells)
+    print("/led reached")
+    try:        
+        led_writer.write_from_json(request.json)
         thread = Thread(target=clear_led_thread)
         thread.start()
     except Exception as e:
@@ -65,7 +58,7 @@ def clear_led_thread():
     newest_request_t = request_t
     time.sleep(CLEAR_TIME_SECS)
     if newest_request_t == request_t:
-        print("clearing colors")
+        print("clearing board")
         led_writer.clear()
     else:
         print("new request recieved during sleeping period")

@@ -23,14 +23,14 @@ class Cell:
         self.g = 0
         self.b = 0
 
-    def __post_init__(self):
-        assert isinstance(self.led_idx, int)
-        assert isinstance(self.r, int)
-        assert isinstance(self.g, int)
-        assert isinstance(self.b, int)
-        assert 0 <= self.r <= 255
-        assert 0 <= self.g <= 255
-        assert 0 <= self.b <= 255
+    #def __post_init__(self):
+    #    assert isinstance(self.led_idx, int)
+    #    assert isinstance(self.r, int)
+    #    assert isinstance(self.g, int)
+    #    assert isinstance(self.b, int)
+    #    assert 0 <= self.r <= 255
+    #    assert 0 <= self.g <= 255
+    #    assert 0 <= self.b <= 255
 
 
 # TODO(@jstmn): Validate this mapping
@@ -39,8 +39,6 @@ def xy_to_led_idx(x: int, y: int) -> int:
     used to index the buffer
     """
     return BOARD_WIDTH * x + y
-
-
 
 
 class LedWriter:
@@ -85,11 +83,12 @@ class LedWriter:
 
     def write_from_json(self, json_data: Dict):
         """Parse a json of rgb values and write to the led matrix. json format:
-
-            {
-                {}
+            { "data": [
+                {"r":0,"g":0,"b":0,"a":0,"x":0,"y":0},
+                ...
+                {"r":0,"g":0,"b":0,"a":0,"x":27,"y":27}
+                ]
             }
-
         """
         colors = []
         for idx, data in enumerate(json_data["data"]):
@@ -97,10 +96,11 @@ class LedWriter:
             #led_idx = xy_to_led_idx(int(data["x"]), int(data["y"]))
             led_idx = idx
             cell = Cell(
-                r=int(data["r"]),
+                r=int(data["r"]), 
                 g=int(data["g"]),
                 b=int(data["b"]),
                 led_idx=led_idx,
             )
             colors.append(cell)
-        return colors
+        self.write(colors)
+
