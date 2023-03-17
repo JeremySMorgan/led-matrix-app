@@ -3,3 +3,4 @@ examples/*.pyc
 ngrok.log
 __pycache__/
 example_requests/
+venv/
