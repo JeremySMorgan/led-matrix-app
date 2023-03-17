@@ -33,12 +33,38 @@ class Cell:
     #    assert 0 <= self.b <= 255
 
 
-# TODO(@jstmn): Validate this mapping
 def xy_to_led_idx(x: int, y: int) -> int:
     """Converts the xy position of a led to the led_number which is
     used to index the buffer
+    
+    Led matrix numbering format:
+    
+        0  1  2  ... 26 27
+        55 54 53 ... 29 28
+        56 57 58 ... 59 60
+        88 87 86 ... 62 61
+        ...
+        783 782  ...   756
+    
+    Coordinate system:
+    
+        +y
+        ^
+        |
+        |
+        |
+        .-----> +x
+      
     """
-    return BOARD_WIDTH * x + y
+    y_inv = BOARD_HEIGHT - y - 1
+    x_mod = x % BOARD_WIDTH
+    n0 = y_inv * BOARD_HEIGHT
+    if y_inv == 0 or y_inv % 2 == 0:
+        n = n0 + x_mod
+    else:
+        n = n0 + (BOARD_WIDTH - x_mod - 1)
+    return n
+
 
 
 class LedWriter:
@@ -51,35 +77,31 @@ class LedWriter:
         """Clear the led matrix"""
         self.strip.clearStrip()
 
-    def cleanup(self):
-        """Clear the led matrix"""
-        self.strip.cleanup()
-
-    def write(
-        self,
-        cells: List[Cell],
-        debug_timing: bool = False,
-        save_buffer: bool = True,
-    ):
-        """Write to the led matrix."""
-        # TODO(@jstmn): Write colors by each led's x/y position
-        # TODO(@jstmn): Speed up write time by setting pixel buffer
-        # in a single call, using numpy or something
-        # TODO(@jstmn): Write list of cells that don't start at index 0
+    # TODO(@jstmn): Speed up write time by setting pixel buffer in a 
+    # single call, using numpy or something
+    def write(self, cells: List[Cell], debug_timing: bool = False):
+        """Write to the led matrix.
+        """
+        self.strip.reset_buffer()
+        
         t0 = time()
         for cell in cells:
             assert isinstance(cell, Cell)
-            self.strip.setPixel(cell.led_idx, cell.r, cell.b, cell.g)
+            self.strip.setPixel(cell.led_idx, cell.r, cell.g, cell.b)
             # self.strip.setPixelRGB(cell.led_idx, cell.color)
 
         if debug_timing:
             print("strip.setPixel():", time() - t0)
 
         t0 = time()
-        self.strip.show(save_buffer=save_buffer)
+        self.strip.show()
         if debug_timing:
             print("strip.show():    ", time() - t0)
 
+    def update_buffer(self, cells):
+        for cell in cells:
+            assert isinstance(cell, Cell)
+            self.strip.setPixel(cell.led_idx, cell.r, cell.b, cell.g)
 
     def write_from_json(self, json_data: Dict):
         """Parse a json of rgb values and write to the led matrix. json format:
@@ -90,17 +112,20 @@ class LedWriter:
                 ]
             }
         """
+        self.clear()
         colors = []
         for idx, data in enumerate(json_data["data"]):
-            # TODO(@jstmn): Get led_idx from x, y
-            #led_idx = xy_to_led_idx(int(data["x"]), int(data["y"]))
-            led_idx = idx
-            cell = Cell(
-                r=int(data["r"]), 
-                g=int(data["g"]),
-                b=int(data["b"]),
-                led_idx=led_idx,
-            )
-            colors.append(cell)
+            r = int(data["r"])
+            g = int(data["g"])
+            b = int(data["b"])
+            if r > 0 or g > 0 or b > 0:
+                led_idx = xy_to_led_idx(int(data["x"]), int(data["y"]))
+                assert 0 <= led_idx < BOARD_HEIGHT * BOARD_WIDTH, f"invalid led_idx={led_idx} (max allowed = {BOARD_HEIGHT}*{BOARD_WIDTH} = {BOARD_HEIGHT * BOARD_WIDTH})"
+                cell = Cell(r=r, g=g, b=b, led_idx=led_idx)
+                colors.append(cell)
         self.write(colors)
+
+if __name__ == "__main__":
+    writer = LedWriter()
+    
 

@@ -8,9 +8,6 @@ from src.led_writer import LedWriter
 from flask import Flask
 from flask import request
 
-if __name__ == "__main__":
-    wait_for_internet()
-
 app = Flask(__name__)
 
 # Constants
@@ -22,9 +19,8 @@ UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
 UPDATE_HEROKU_HOSTNAME_INTERVAL = 5
 
 BRIGHTNESS = 10
-CLEAR_TIME_SECS = 30.0*60.0
+CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
 
-# Configs
 ngrok_manager = NgrokManager(PORT)
 ngrok_manager.start_tunnel()
 
@@ -34,7 +30,8 @@ exit_update_hostname_thread = False
 
 
 def update_heroku_known_hostnames_thread():
-    """ Update the heroku server with the known app & hypervisor public ngrok addresses
+    """ Update the heroku server with the known app & hypervisor public 
+    ngrok addresses
     """
     global exit_update_hostname_thread
     while True:
@@ -46,8 +43,8 @@ def update_heroku_known_hostnames_thread():
 
 
 def clear_led_thread():
-    """Function that clears the led every `CLEAR_TIME_SECS` seconds. Function is blocking so should be called in its own
-    thread
+    """Function that clears the led every `CLEAR_TIME_SECS` seconds. 
+    Function is blocking so should be called in its own thread
     """
     global newest_request_t
     request_t = time.time()
@@ -79,9 +76,10 @@ python3.6 ~/Desktop/led-matrix-app/app.py
 
 
 if __name__ == "__main__":
+    wait_for_internet()
     thread = Thread(target=update_heroku_known_hostnames_thread)
     thread.start()
-
+    led_writer.clear()
     try:
         app.run(debug=True, port=PORT, use_reloader=False)
     except KeyboardInterrupt:
@@ -91,8 +89,3 @@ if __name__ == "__main__":
         print("Shutting down ngrok_manager")
         ngrok_manager.stop_tunnel()
 
-    # try:
-    #     pass
-    # except Exception:
-    #     print("Socket already in use, exiting()")
-    # exit()

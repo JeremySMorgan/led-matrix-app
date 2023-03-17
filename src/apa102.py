@@ -48,30 +48,27 @@ class APA102:
     ):  # The number of LEDs in the Strip
         self.numLEDs = numLEDs
         # LED startframe is three "1" bits, followed by 5 brightness bits
-        self.ledstart = (
-            globalBrightness & 0b00011111
-        ) | 0b11100000  # Don't validate, just slash of extra bits
+        self.ledstart = (globalBrightness & 0b00011111) | 0b11100000  # Don't validate, just slash of extra bits
         self.leds = []  # Pixel buffer
-        for _ in range(
-            self.numLEDs
-        ):  # Allocate the entire buffer. If later some LEDs are not set,
-            self.leds.extend(
-                [self.ledstart]
-            )  # they will just be black,
-            self.leds.extend(
-                [0x00] * 3
-            )  #  instead of crashing the driver.
+        self.reset_buffer()
         self.spi = spidev.SpiDev()  # Init the SPI device
         self.spi.open(0, 1)  # Open SPI port 0, slave device (CS)  1
         self.spi.max_speed_hz = 8000000  # Up the speed a bit, so that the LEDs are painted faster
 
+    def reset_buffer(self):
+        """ Initializes the buffer
+        """
+        self.leds = []  # Pixel buffer
+        for _ in range(self.numLEDs):  # Allocate the entire buffer. If later some LEDs are not set,
+            self.leds.extend([self.ledstart])  # they will just be black,
+            self.leds.extend([0x00] * 3)  #  instead of crashing the driver.
+        
+    
     def clockStartFrame(self):
         """
         This method clocks out a start frame, telling the receiving LED that it must update its own color now.
         """
-        _ = self.spi.xfer2(
-            [0x00, 0x00, 0x00, 0x00]
-        )  # Start frame, 32 zero bits
+        _ = self.spi.xfer2([0x00, 0x00, 0x00, 0x00])  # Start frame, 32 zero bits
 
     def clockEndFrame(self):
         """The end frame is not really a data package. Its purpose is to trigger additional clock pulses. The clock pulses
@@ -115,8 +112,8 @@ class APA102:
         startIndex = 4 * ledNum
         self.leds[startIndex] = self.ledstart
         self.leds[startIndex + 3] = red
-        self.leds[startIndex + 1] = green
-        self.leds[startIndex + 2] = blue
+        self.leds[startIndex + 1] = blue
+        self.leds[startIndex + 2] = green
 
     def print_buffer(self, n: int = 10):
         """Print out the first `n` values in the buffer"""
@@ -134,19 +131,15 @@ class APA102:
             (rgbColor & 0x00FF00) >> 8,
             rgbColor & 0x0000FF,
         )
-
-    def show(self, save_buffer: bool = False):
+    
+    # NOTE: xfer2 overwrites the input list with all 0s
+    def show(self):
         """Sends the content of the pixel buffer to the strip.
         Todo: More than 1024 LEDs requires more than one xfer operation.
         """
+        assert (len(self.leds) / 4) == self.numLEDs, f"Error, len(self.leds) / 4 != self.numLEDs ({len(self.leds) / 4} != {self.numLEDs})"
         self.clockStartFrame()
-        if save_buffer:
-            curr_leds = self.leds.copy()
-        self.spi.xfer2(
-            self.leds
-        )  # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs.
-        if save_buffer:
-            self.leds = curr_leds
+        self.spi.xfer2(self.leds)  # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs.
         self.clockEndFrame()
 
     def cleanup(self):
