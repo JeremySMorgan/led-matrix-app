@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-from ngrok_manager import NgrokManager, ngrok_process_is_running
+from src.ngrok_manager import NgrokManager, ngrok_process_is_running
 
 from tqdm import tqdm
 
@@ -41,6 +41,7 @@ class TestNgrokManager(unittest.TestCase):
             self.assertTrue(ngrok_process_is_running())
             
             hostname = self.ng_manager.get_public_hostname()
+            print("hostname:",hostname)
             assert isinstance(hostname, str)
             self.assertTrue(hostname is not None)
             self.assertTrue(isinstance(hostname, str))

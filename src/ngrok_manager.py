@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 from pyngrok import ngrok
 
@@ -33,11 +34,13 @@ class NgrokManager:
     def start_tunnel(self):
         """ Start a ngrok tunnel
         """
+        print("NgrokManager.start_tunnel(): starting tunnel")
         self.tunnel = ngrok.connect(addr=self._port)
 
     def stop_tunnel(self):
         """ Kill the current running ngrok tunnels
         """
+        print("NgrokManager.stop_tunnel():  stopping tunnel")
         if self.tunnel is None:
             return
         for tunnel in ngrok.get_tunnels():
@@ -52,3 +55,15 @@ class NgrokManager:
         if self.tunnel is None:
             return None
         return self.tunnel.public_url
+        
+if __name__ == "__main__":
+    nm = NgrokManager(5000)
+    nm.start_tunnel()
+    while True:
+        time.sleep(10)
+        print("\nUpdating ngrok url")
+        print("current hostname:", nm.get_public_hostname())
+        nm.stop_tunnel()
+        nm.start_tunnel()
+        print("new hostname:    ", nm.get_public_hostname())
+        

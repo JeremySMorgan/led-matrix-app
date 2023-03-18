@@ -14,7 +14,7 @@ app = Flask(__name__)
 PORT = 5001
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
-NGROK_CYCLE_TIME_SEC = 30*60  # Change url every 30 minutes
+NGROK_CYCLE_TIME_SEC = 45 # 30*60  # Change url every 30 minutes
 UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
 UPDATE_HEROKU_HOSTNAME_INTERVAL = 5
 
@@ -27,6 +27,22 @@ ngrok_manager.start_tunnel()
 led_writer = LedWriter(BRIGHTNESS)
 newest_request_t = 0
 exit_update_hostname_thread = False
+exit_update_ngrok_url_thread = False
+
+
+def update_ngrok_url_thread():
+    """ Update the exposed ngrok url
+    """
+    global exit_update_ngrok_url_thread, ngrok_manager
+    while True:
+        time.sleep(NGROK_CYCLE_TIME_SEC)
+        print("Updating ngrok url")
+        print("current hostname:", ngrok_manager.get_public_hostname())
+        ngrok_manager.stop_tunnel()
+        ngrok_manager.start_tunnel()
+        print("new hostname:    ", ngrok_manager.get_public_hostname())
+        if exit_update_ngrok_url_thread:
+            break
 
 
 def update_heroku_known_hostnames_thread():
@@ -35,6 +51,9 @@ def update_heroku_known_hostnames_thread():
     """
     global exit_update_hostname_thread
     while True:
+        if ngrok_manager.get_public_hostname() is None:
+            time.sleep(0.1)
+            continue
         data = {"HOSTNAME": ngrok_manager.get_public_hostname()}
         res = send_json_post(UPDATE_HEROKU_HOSTNAME_URL, data, verbose=False)
         time.sleep(UPDATE_HEROKU_HOSTNAME_INTERVAL)
@@ -71,20 +90,26 @@ def parse_request():
 
 """" Example usage
 
-python3.6 ~/Desktop/led-matrix-app/app.py
+python3.6 /home/pi/Desktop/led-matrix-app/app.py
 """
 
 
 if __name__ == "__main__":
     wait_for_internet()
+    
     thread = Thread(target=update_heroku_known_hostnames_thread)
     thread.start()
+    
+    ngrok_thread = Thread(target=update_ngrok_url_thread)
+    ngrok_thread.start()
+    
     led_writer.clear()
     try:
         app.run(debug=True, port=PORT, use_reloader=False)
     except KeyboardInterrupt:
         print("Keyboard interrupt caught, shutting down")
         exit_update_hostname_thread = True
+        exit_update_ngrok_url_thread = True
 
         print("Shutting down ngrok_manager")
         ngrok_manager.stop_tunnel()
