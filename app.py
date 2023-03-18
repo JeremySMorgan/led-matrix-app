@@ -14,7 +14,7 @@ app = Flask(__name__)
 PORT = 5001
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
-NGROK_CYCLE_TIME_SEC = 45 # 30*60  # Change url every 30 minutes
+NGROK_CYCLE_TIME_SEC = 15*60  # Change url every 30 minutes
 UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
 UPDATE_HEROKU_HOSTNAME_INTERVAL = 5
 
