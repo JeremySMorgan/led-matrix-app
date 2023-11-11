@@ -83,7 +83,7 @@ class APA102:
         This goes on like this through the entire strip. Each LED delays its data-out by 1/2 clock cycle by inverting the
         clock signal. At the end of the strip, we are numLEDs/2 clock cycles behind. Usually this means that the last LED did not
         yet receive all of its data (32 bits is a full LED data frame, so if the strip has 64 LEDs or less, then only the last LED
-        is affected).
+        is affected).setPixelRGB
         Ultimately, we need to send additional numLEDs/2 arbitrary data bits, in order to trigger numLEDs/2 additional clock
         changes. This driver sends zeroes, which has the benefit of getting LED one partially or fully ready for the next update
         to the strip. An optimized version of the driver could omit the "clockStartFrame" method if enough zeroes have
@@ -95,7 +95,12 @@ class APA102:
 
     def clearStrip(self):
         """Sets the color for the entire strip to black, and immediately shows the result."""
-        self.spi.xfer2([self.ledstart, 0x00, 0x00, 0x00] * self.numLEDs)
+        self.clockStartFrame()
+        #reset_buffer = [self.ledstart, 0x01, 0x01, 0x01] * (self.numLEDs-10)
+        #reset_buffer = [self.ledstart, 0x0000FF, 0x0000FF, 0x0000FF] * self.numLEDs
+        reset_buffer = [self.ledstart, 0x00, 0x00, 0x00] * self.numLEDs
+        self.spi.xfer2(reset_buffer)
+        #self.spi.xfer2([self.ledstart, 0x00, 0x00, 0x00] * self.numLEDs)
         self.clockEndFrame()  # ... and clock the end frame so that also the last LED(s) shut down.
 
     def setPixel(self, ledNum, red, green, blue):
@@ -140,7 +145,11 @@ class APA102:
         assert (len(self.leds) / 4) == self.numLEDs, f"Error, len(self.leds) / 4 != self.numLEDs ({len(self.leds) / 4} != {self.numLEDs})"
         self.clockStartFrame()
         self.spi.xfer2(self.leds)  # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs.
+        
         self.clockEndFrame()
+    
+    def __del__(self):
+        self.cleanup()
 
     def cleanup(self):
         """This method should be called at the end of a program in order to release the SPI device"""

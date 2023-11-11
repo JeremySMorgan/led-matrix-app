@@ -5,7 +5,7 @@ from time import sleep
 
 from src.led_writer import LedWriter
 
-
+NUM_PIXLES = 28*28
 
 """ Example usage
 
@@ -31,36 +31,14 @@ if __name__ == "__main__":
     with open(filepath, "r") as f:
         data = json.load(f)
         led_writer.write_from_json(data)
-                
-        """
-        led_writer.strip.setPixel(0, 255, 0, 0)
-        led_writer.strip.setPixel(55, 0, 255, 0)
-        led_writer.strip.setPixel(56, 255, 0, 0)
-        led_writer.strip.setPixel(111, 0, 255, 0)
-        
-        led_writer.strip.setPixel(783, 0, 0, 255)
-        led_writer.strip.setPixel(755, 0, 0, 255)
-        led_writer.strip.setPixel(727, 0, 0, 255)
-        led_writer.strip.show()
-        """
-        """
-        led_writer.strip.setPixel(0, 255, 0, 0)
-        led_writer.strip.setPixel(1, 0, 255, 0)
-        led_writer.strip.setPixel(2, 0, 0, 255)
-        led_writer.strip.setPixel(3, 255, 0, 0)
-        led_writer.strip.setPixel(4, 0, 255, 0)
-        led_writer.strip.setPixel(5, 0, 0, 255)
-        led_writer.strip.setPixel(28+0, 255, 0, 0)
-        led_writer.strip.setPixel(28+1, 0, 255, 0)
-        led_writer.strip.setPixel(28+2, 0, 0, 255)
-        led_writer.strip.setPixel(28+3, 255, 0, 0)
-        led_writer.strip.setPixel(28+4, 0, 255, 0)
-        led_writer.strip.setPixel(28+5, 0, 0, 255)
-        led_writer.strip.setPixel(2*28+0, 255, 0, 0)
-        led_writer.strip.setPixel(2*28+1, 0, 255, 0)
-        led_writer.strip.setPixel(2*28+2, 0, 0, 255)
-        led_writer.strip.setPixel(2*28+3, 255, 0, 0)
-        led_writer.strip.setPixel(2*28+4, 0, 255, 0)
-        led_writer.strip.setPixel(2*28+5, 0, 0, 255)
-        led_writer.strip.show()
-        """        
+
+        sleep(1.0)
+        led_writer.clear()
+            
+        i = 15
+        j = 5
+        color = led_writer.strip.wheel(
+                    (((i << 8) // NUM_PIXLES) + j * 4) & 255
+                )
+        #led_writer.strip.setPixelRGB(25, color)
+        #led_writer.strip.show()

@@ -15,7 +15,10 @@ PORT = 5001
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
 NGROK_CYCLE_TIME_SEC = 15*60  # Change url every 30 minutes
-UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
+#UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
+UPDATE_HEROKU_HOSTNAME_URL = f"http://2b30-2603-8000-ba00-24ff-d6f7-b335-b94d-755f.ngrok.io/update_rpi_hypervisor_address"
+
+
 UPDATE_HEROKU_HOSTNAME_INTERVAL = 5
 
 BRIGHTNESS = 10

@@ -69,8 +69,8 @@ def xy_to_led_idx(x: int, y: int) -> int:
 
 class LedWriter:
     def __init__(self, brightness: int = 10):
+        assert 0 < brightness <= 31
         self.num_leds = BOARD_WIDTH * BOARD_HEIGHT
-        assert brightness >= 0 and brightness <= 31
         self.strip = apa102.APA102(self.num_leds, brightness)
 
     def clear(self):

@@ -10,7 +10,7 @@ def now_str() -> str:
 def send_json_post(url: str, json_data: dict, verbose=False):
     """ Send a POST request with json data
     """
-    req = requests.post(url, json=json_data)
+    req = requests.post(url, json=json_data, verify=False)
 
     # 503: Service Unavailable
     if req.status_code == 503:
