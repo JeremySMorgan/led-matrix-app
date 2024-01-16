@@ -2,6 +2,8 @@
 
 See a demo here: https://www.youtube.com/watch?v=TyzOgKOoLEo
 
+
+
 ## Setup
 
 **Install dependencies**
@@ -23,4 +25,6 @@ Add the following line to *.bashrc*
 python3.6 <path>/<to>/led-matrix-app/app.py &
 ```
 
+## Development
 
+tail logs from heroku: `heroku logs --app jeremysmorgan --tail`

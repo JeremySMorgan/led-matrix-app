@@ -7,7 +7,7 @@ import sys
 sys.path.append(os.getcwd())
 from src import apa102
 
-import buttons
+# import buttons
 
 from sys import argv
 from time import sleep

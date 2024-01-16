@@ -1,67 +1,25 @@
 from threading import Thread
 import time
 
-from src.utils import wait_for_internet, send_json_post
-from src.ngrok_manager import NgrokManager
+import socketio
+from time import sleep
+import json
+
+from src.utils import wait_for_internet
 from src.led_writer import LedWriter
 
-from flask import Flask
-from flask import request
-
-app = Flask(__name__)
+sio = socketio.Client()
 
 # Constants
-PORT = 5001
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
-
-NGROK_CYCLE_TIME_SEC = 15*60  # Change url every 30 minutes
-#UPDATE_HEROKU_HOSTNAME_URL = f"{HEROKU_HOSTNAME}/update_rpi_hypervisor_address"
-UPDATE_HEROKU_HOSTNAME_URL = f"http://2b30-2603-8000-ba00-24ff-d6f7-b335-b94d-755f.ngrok.io/update_rpi_hypervisor_address"
-
-
-UPDATE_HEROKU_HOSTNAME_INTERVAL = 5
 
 BRIGHTNESS = 10
 CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
-
-ngrok_manager = NgrokManager(PORT)
-ngrok_manager.start_tunnel()
 
 led_writer = LedWriter(BRIGHTNESS)
 newest_request_t = 0
 exit_update_hostname_thread = False
 exit_update_ngrok_url_thread = False
-
-
-def update_ngrok_url_thread():
-    """ Update the exposed ngrok url
-    """
-    global exit_update_ngrok_url_thread, ngrok_manager
-    while True:
-        time.sleep(NGROK_CYCLE_TIME_SEC)
-        print("Updating ngrok url")
-        print("current hostname:", ngrok_manager.get_public_hostname())
-        ngrok_manager.stop_tunnel()
-        ngrok_manager.start_tunnel()
-        print("new hostname:    ", ngrok_manager.get_public_hostname())
-        if exit_update_ngrok_url_thread:
-            break
-
-
-def update_heroku_known_hostnames_thread():
-    """ Update the heroku server with the known app & hypervisor public 
-    ngrok addresses
-    """
-    global exit_update_hostname_thread
-    while True:
-        if ngrok_manager.get_public_hostname() is None:
-            time.sleep(0.1)
-            continue
-        data = {"HOSTNAME": ngrok_manager.get_public_hostname()}
-        res = send_json_post(UPDATE_HEROKU_HOSTNAME_URL, data, verbose=False)
-        time.sleep(UPDATE_HEROKU_HOSTNAME_INTERVAL)
-        if exit_update_hostname_thread:
-            break
 
 
 def clear_led_thread():
@@ -78,11 +36,25 @@ def clear_led_thread():
     else:
         print("new request recieved during sleeping period")
 
+@sio.event
+def connect():
+    print("connected")
 
-@app.route('/led', methods=['POST'])
-def parse_request():
+@sio.event
+def connect_error():
+    print('[INFO] Failed to connect to server.')
+
+@sio.event
+def disconnect():
+    print('[INFO] Disconnected from server.')
+
+
+@sio.on("led-design")
+def message_received(message):
+    print("got 'led-design' message")
+    request_json = json.loads(message)
     try:
-        led_writer.write_from_json(request.json)
+        led_writer.write_from_json(request_json)
         thread = Thread(target=clear_led_thread)
         thread.start()
     except Exception as e:
@@ -91,29 +63,21 @@ def parse_request():
     return {"status": "OK", "error": ""}
 
 
-"""" Example usage
+@sio.on('*')
+def unhandled_event(event, sid, data):
+    print("caught an unhandled event")
 
-python3.6 /home/pi/Desktop/led-matrix-app/app.py
+
+""" Example usage
+
+source /home/jm/Desktop/led-matrix-app/venv/bin/activate && python3 /home/jm/Desktop/led-matrix-app/app.py
 """
-
 
 if __name__ == "__main__":
     wait_for_internet()
     
-    thread = Thread(target=update_heroku_known_hostnames_thread)
-    thread.start()
-    
-    ngrok_thread = Thread(target=update_ngrok_url_thread)
-    ngrok_thread.start()
-    
     led_writer.clear()
-    try:
-        app.run(debug=True, port=PORT, use_reloader=False)
-    except KeyboardInterrupt:
-        print("Keyboard interrupt caught, shutting down")
-        exit_update_hostname_thread = True
-        exit_update_ngrok_url_thread = True
+    sio.connect(HEROKU_HOSTNAME)
 
-        print("Shutting down ngrok_manager")
-        ngrok_manager.stop_tunnel()
-
+    while True:
+        sleep(1.0)
