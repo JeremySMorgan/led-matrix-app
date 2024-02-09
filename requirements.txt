@@ -1,0 +1,16 @@
+bidict==0.21.4
+certifi==2024.2.2
+charset-normalizer==2.0.12
+dataclasses==0.8
+h11==0.13.0
+idna==3.6
+numpy==1.19.5
+pygame==2.5.2
+python-engineio==4.9.0
+python-socketio==5.11.0
+requests==2.27.1
+scipy==1.5.4
+simple-websocket==1.0.0
+typing_extensions==4.1.1
+urllib3==1.26.18
+wsproto==1.0.0

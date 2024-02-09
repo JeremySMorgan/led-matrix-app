@@ -6,9 +6,11 @@ from time import sleep
 import json
 
 from src.utils import wait_for_internet
-from src.led_writer import LedWriter
+from src.led_writer import LedWriter, LedWriterSim
 
 sio = socketio.Client()
+
+SIM_MODE = True
 
 # Constants
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
@@ -16,10 +18,12 @@ HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 BRIGHTNESS = 10
 CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
 
-led_writer = LedWriter(BRIGHTNESS)
+if not SIM_MODE:
+    led_writer = LedWriter(BRIGHTNESS)
+else:
+    led_writer = LedWriterSim()
+
 newest_request_t = 0
-exit_update_hostname_thread = False
-exit_update_ngrok_url_thread = False
 
 
 def clear_led_thread():
@@ -53,13 +57,9 @@ def disconnect():
 def message_received(message):
     print("got 'led-design' message")
     request_json = json.loads(message)
-    try:
-        led_writer.write_from_json(request_json)
-        thread = Thread(target=clear_led_thread)
-        thread.start()
-    except Exception as e:
-        print(f"Error parseing /LED request: {e}")
-        return {"status": "ERROR", "error": str(e)}
+    led_writer.write_from_json(request_json)
+    thread = Thread(target=clear_led_thread)
+    thread.start()
     return {"status": "OK", "error": ""}
 
 
@@ -74,10 +74,14 @@ source /home/jm/Desktop/led-matrix-app/venv/bin/activate && python3 /home/jm/Des
 """
 
 if __name__ == "__main__":
-    wait_for_internet()
-    
-    led_writer.clear()
-    sio.connect(HEROKU_HOSTNAME)
 
-    while True:
-        sleep(1.0)
+    if not SIM_MODE:
+        wait_for_internet()
+        led_writer.clear()
+        sio.connect(HEROKU_HOSTNAME)
+        while True:
+            sleep(1.0)
+
+    else:
+        sio.connect("http://localhost:5001/")
+        led_writer.run()
