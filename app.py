@@ -17,6 +17,8 @@ HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
 BRIGHTNESS = 10
 CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
+CLEAR_TIME_SECS = 10
+
 
 if not SIM_MODE:
     led_writer = LedWriter(BRIGHTNESS)
@@ -32,13 +34,12 @@ def clock_thread():
     global board_is_active
     while True:
         if board_is_active:
-            sleep(1)
+            continue
         led_writer.draw_time()
         sleep(0.1)
 
 
-
-def clear_led_thread():
+def clear_led_thread(delay: float):
     """Function that clears the led every `CLEAR_TIME_SECS` seconds. 
     Function is blocking so should be called in its own thread
     """
@@ -46,14 +47,14 @@ def clear_led_thread():
     board_is_active = True
     request_t = time()
     newest_request_t = request_t
-    sleep(CLEAR_TIME_SECS)
+    sleep(delay)
     if newest_request_t == request_t:
-        print("clearing board")
+        print("clear_led_thread(): clearing board")
         led_writer.clear()
-        sleep(2)
+        led_writer.stop_cgl()
         board_is_active = False
     else:
-        print("new request recieved during clear_led_thread() sleeping period")
+        print("clear_led_thread(): new request recieved during sleeping period, exiting with noops performed")
 
 @sio.event
 def connect():
@@ -70,13 +71,12 @@ def disconnect():
 
 @sio.on("led-design")
 def message_received(message):
-    print("got 'led-design' message")
+    print("message_received(message): received message")
     request_json = json.loads(message)
-    with open("data/cgl.json", "w") as json_file:
-        json.dump(request_json, json_file)
-
+    # with open("data/cgl.json", "w") as json_file:
+    #     json.dump(request_json, json_file)
     led_writer.write_from_json(request_json)
-    thread = Thread(target=clear_led_thread)
+    thread = Thread(target=clear_led_thread, args=(CLEAR_TIME_SECS, ))
     thread.start()
     return {"status": "OK", "error": ""}
 
@@ -102,7 +102,6 @@ if __name__ == "__main__":
         sio.connect(HEROKU_HOSTNAME)
         while True:
             sleep(1.0)
-
     else:
         sio.connect("http://localhost:5001/")
         led_writer.run()

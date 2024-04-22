@@ -47,18 +47,18 @@ class Cell:
 def xy_to_led_idx(x: int, y: int) -> int:
     """Converts the xy position of a led to the led_number which is
     used to index the buffer
-    
+
     Led matrix numbering format:
-    
+
         0  1  2  ... 26 27
         55 54 53 ... 29 28
         56 57 58 ... 59 60
         88 87 86 ... 62 61
         ...
         783 782  ...   756
-    
+
     Coordinate system:
-    
+
         +y
         ^
         |
@@ -80,6 +80,41 @@ def xy_to_led_idx(x: int, y: int) -> int:
 
 CGL_MODE = "cgl"
 RGB_MODE = "rgb"
+
+
+# TODO: consider applying a convolution filter instead of manually iterating
+def cgl_update_alive(alive: np.ndarray):
+    """ Rules:
+    1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
+    2. Any live cell with two or three live neighbors lives on to the next generation.
+    3. Any live cell with more than three live neighbors dies, as if by overpopulation.
+    4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+    """
+
+    alive_next = np.zeros_like(alive)
+    ncells = N_LEDS_PER_DIM 
+
+    for x in range(ncells):
+        for y in range(ncells):
+
+            neighbors = alive[ max(x - 1, 0): min(x+2, ncells), max(y-1, 0): min(y+2, ncells)]
+
+            if alive[x, y]:
+                n_neighbors_alive = int(neighbors.sum() - 1)
+                dead_by_1 = n_neighbors_alive < 2
+                dead_by_2 = not (n_neighbors_alive == 2 or n_neighbors_alive == 3)
+                dead_by_3 = n_neighbors_alive > 3
+                if any((dead_by_1, dead_by_2, dead_by_3)):
+                    alive_next[x, y] = 0.0
+                else:
+                    alive_next[x, y] = 1.0
+
+            else:
+                if int(neighbors.sum()) == 3:
+                    alive_next[x, y] = 1.0
+
+    return alive_next
+
 
 
 
@@ -228,6 +263,8 @@ class LedWriter(LedWriterBase):
             bus_speed_hz=bus_speed_hz, global_brightness=global_brightness
             )
         self.last_cells = []
+        self.cgl_curr_thread_idx = 0
+        self.cgl_thread_should_kill = []
 
     def clear(self):
         """Clear the led matrix"""
@@ -299,7 +336,7 @@ class LedWriter(LedWriterBase):
 
 
 
-    def cgl_update_thread(self, initial_cells: List[Cell]):
+    def cgl_update_thread(self, initial_cells: List[Cell], thread_idx: int):
 
         # write to board
         def write_to_board():
@@ -315,14 +352,17 @@ class LedWriter(LedWriterBase):
             alive[cell.x, cell.y] = 1.0
 
         while True:
-            write_to_board()
 
-            sleep(1.0)
-            if self.mode != CGL_MODE:
-                self.clear()
+            write_to_board()
+            alive = cgl_update_alive(alive)
+            sleep(1.5)
+
+            if (self.mode != CGL_MODE) or (self.cgl_thread_should_kill[thread_idx]):
                 return
 
-
+    def stop_cgl(self):
+        for i in range(len(self.cgl_thread_should_kill)):
+            self.cgl_thread_should_kill[i] = True
 
     def write_from_json(self, json_data: Dict):
         """Parse a json of rgb values and write to the led matrix. json format:
@@ -333,9 +373,8 @@ class LedWriter(LedWriterBase):
                 ]
             }
         """
-        # self.clear()
         cells = []
-        for idx, data in enumerate(json_data["data"]):
+        for data in json_data["data"]:
             r = int(data["r"])
             g = int(data["g"])
             b = int(data["b"])
@@ -345,8 +384,16 @@ class LedWriter(LedWriterBase):
 
         if json_data["mode"] == CGL_MODE:
             self.mode = CGL_MODE
-            thread = Thread(target=self.cgl_update_thread, args=(cells, ))
+
+            # kill previous cgl threads
+            for i in range(len(self.cgl_thread_should_kill)):
+                self.cgl_thread_should_kill[i] = True
+
+            # start new cgl thread
+            self.cgl_thread_should_kill.append(False)
+            thread = Thread(target=self.cgl_update_thread, args=(cells, self.cgl_curr_thread_idx))
             thread.start()
+            self.cgl_curr_thread_idx += 1
 
         else:
             if self.mode == CGL_MODE:
