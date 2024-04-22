@@ -1,16 +1,16 @@
 from threading import Thread
-import time
+from time import time, sleep
+import json
 
 import socketio
-from time import sleep
-import json
 
 from src.utils import wait_for_internet
 from src.led_writer import LedWriter, LedWriterSim
 
 sio = socketio.Client()
 
-SIM_MODE = True
+# SIM_MODE = True
+SIM_MODE = False
 
 # Constants
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
@@ -24,21 +24,36 @@ else:
     led_writer = LedWriterSim()
 
 newest_request_t = 0
+board_is_active = False
+
+
+def clock_thread():
+    # shows the time when the board is inactive
+    global board_is_active
+    while True:
+        if board_is_active:
+            sleep(1)
+        led_writer.draw_time()
+        sleep(0.1)
+
 
 
 def clear_led_thread():
     """Function that clears the led every `CLEAR_TIME_SECS` seconds. 
     Function is blocking so should be called in its own thread
     """
-    global newest_request_t
-    request_t = time.time()
+    global newest_request_t, board_is_active
+    board_is_active = True
+    request_t = time()
     newest_request_t = request_t
-    time.sleep(CLEAR_TIME_SECS)
+    sleep(CLEAR_TIME_SECS)
     if newest_request_t == request_t:
         print("clearing board")
         led_writer.clear()
+        sleep(2)
+        board_is_active = False
     else:
-        print("new request recieved during sleeping period")
+        print("new request recieved during clear_led_thread() sleeping period")
 
 @sio.event
 def connect():
@@ -57,6 +72,9 @@ def disconnect():
 def message_received(message):
     print("got 'led-design' message")
     request_json = json.loads(message)
+    with open("data/cgl.json", "w") as json_file:
+        json.dump(request_json, json_file)
+
     led_writer.write_from_json(request_json)
     thread = Thread(target=clear_led_thread)
     thread.start()
@@ -74,7 +92,10 @@ source /home/jm/Desktop/led-matrix-app/venv/bin/activate && python3 /home/jm/Des
 """
 
 if __name__ == "__main__":
+    clk_thread = Thread(target=clock_thread)
+    clk_thread.start()
 
+    print("SIM_MODE:", SIM_MODE)
     if not SIM_MODE:
         wait_for_internet()
         led_writer.clear()

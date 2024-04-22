@@ -9,6 +9,7 @@ NUM_PIXLES = 28*28
 
 """ Example usage
 
+python test_write.py --filename=cgl
 python test_write.py --filename=rgb
 python test_write.py --filename=led_matrix_data_empty
 python test_write.py --filename=red_check
@@ -32,13 +33,13 @@ if __name__ == "__main__":
         data = json.load(f)
         led_writer.write_from_json(data)
 
-        sleep(1.0)
+        sleep(10.0)
         led_writer.clear()
-            
-        i = 15
-        j = 5
-        color = led_writer.strip.wheel(
-                    (((i << 8) // NUM_PIXLES) + j * 4) & 255
-                )
+
+        # i = 15
+        # j = 5
+        # color = led_writer.strip.wheel(
+        #             (((i << 8) // NUM_PIXLES) + j * 4) & 255
+        #         )
         #led_writer.strip.setPixelRGB(25, color)
         #led_writer.strip.show()

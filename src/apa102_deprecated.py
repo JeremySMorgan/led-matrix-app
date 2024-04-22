@@ -62,8 +62,7 @@ class APA102:
         for _ in range(self.numLEDs):  # Allocate the entire buffer. If later some LEDs are not set,
             self.leds.extend([self.ledstart])  # they will just be black,
             self.leds.extend([0x00] * 3)  #  instead of crashing the driver.
-        
-    
+
     def clockStartFrame(self):
         """
         This method clocks out a start frame, telling the receiving LED that it must update its own color now.
@@ -136,18 +135,17 @@ class APA102:
             (rgbColor & 0x00FF00) >> 8,
             rgbColor & 0x0000FF,
         )
-    
+
     # NOTE: xfer2 overwrites the input list with all 0s
-    def show(self):
+    def show(self, save_buffer: bool = True):
         """Sends the content of the pixel buffer to the strip.
         Todo: More than 1024 LEDs requires more than one xfer operation.
         """
         assert (len(self.leds) / 4) == self.numLEDs, f"Error, len(self.leds) / 4 != self.numLEDs ({len(self.leds) / 4} != {self.numLEDs})"
         self.clockStartFrame()
         self.spi.xfer2(self.leds)  # SPI takes up to 4096 Integers. So we are fine for up to 1024 LEDs.
-        
         self.clockEndFrame()
-    
+
     def __del__(self):
         self.cleanup()
 
