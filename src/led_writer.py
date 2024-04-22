@@ -212,17 +212,26 @@ class LedWriter(LedWriterBase):
     def __init__(self, brightness: int = 10):
         super().__init__()
         assert 0 < brightness <= 31
-        # from src import apa102_v2
-        # self.strip = apa102_v2.APA102(
-        #     num_led=self.num_leds, bus_method='spi', spi_bus=0, mosi=None, sclk=None, ce=None,
-        #     bus_speed_hz=8000000, global_brightness=4
-        #     )
-        from src import apa102
-        self.strip = apa102.APA102(self.num_leds, brightness)
+        from src import apa102_v2
+
+        # bus_speed_hz=8000000 # red flickering present
+        # bus_speed_hz=6000000   # infrequent flickering
+        # bus_speed_hz=4000000   # no flickering
+        # bus_speed_hz=1500000 # no flickering
+        bus_speed_hz=5000000   # no flickering
+
+
+        global_brightness=5
+
+        self.strip = apa102_v2.APA102(
+            num_led=self.num_leds, bus_method='spi', spi_bus=0, mosi=None, sclk=None, ce=None,
+            bus_speed_hz=bus_speed_hz, global_brightness=global_brightness
+            )
+        self.last_cells = []
 
     def clear(self):
         """Clear the led matrix"""
-        self.strip.clearStrip()
+        self.strip.clear_strip()
 
     def draw_time(self):
         if self.mode == CGL_MODE:
@@ -262,26 +271,26 @@ class LedWriter(LedWriterBase):
         self.write(cells)
 
 
-    # TODO(@jstmn): Speed up write time by setting pixel buffer in a 
-    # single call, using numpy or something
     def write(self, cells: List[Cell], debug_timing: bool = False):
         """Write to the led matrix.
         """
-        self.strip.reset_buffer()
+        # clear previous
+        for cell in self.last_cells:
+            self.strip.set_pixel(cell.led_idx, 0, 0, 0)
 
+        # send new
         t0 = time()
         for cell in cells:
-            assert isinstance(cell, Cell)
-            self.strip.setPixel(cell.led_idx, cell.r, cell.g, cell.b)
-            # self.strip.setPixelRGB(cell.led_idx, cell.color)
+            self.strip.set_pixel(cell.led_idx, cell.r, cell.g, cell.b)
         if debug_timing:
             print("strip.setPixel():", time() - t0)
 
-        # ~ 0.008191 sec for 100 cells
         t0 = time()
         self.strip.show()
         if debug_timing:
             print("strip.show():    ", time() - t0)
+        self.last_cells = cells
+
 
     def update_buffer(self, cells):
         for cell in cells:
@@ -324,7 +333,7 @@ class LedWriter(LedWriterBase):
                 ]
             }
         """
-        self.clear()
+        # self.clear()
         cells = []
         for idx, data in enumerate(json_data["data"]):
             r = int(data["r"])
