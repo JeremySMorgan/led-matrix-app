@@ -13,9 +13,9 @@ charset-normalizer==3.3.2
 click==8.1.7
 Flask==3.0.0
 h11==0.14.0
-idna==3.4
+idna==3.7
 itsdangerous==2.1.2
-Jinja2==3.1.2
+Jinja2==3.1.4
 MarkupSafe==2.1.3
 numpy==1.26.4
 pyftdi==0.55.4
@@ -35,5 +35,5 @@ sysv-ipc==1.1.0
 typing_extensions==4.11.0
 urllib3==2.1.0
 websocket-client==1.7.0
-Werkzeug==3.0.1
+Werkzeug==3.0.3
 wsproto==1.2.0
