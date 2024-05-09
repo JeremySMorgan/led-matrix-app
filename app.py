@@ -17,7 +17,7 @@ HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
 BRIGHTNESS = 10
 CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
-CLEAR_TIME_SECS = 10
+# CLEAR_TIME_SECS = 10
 
 
 if not SIM_MODE:
@@ -58,7 +58,7 @@ def clear_led_thread(delay: float):
 
 @sio.event
 def connect():
-    print("connected")
+    print("[INFO] connected")
 
 @sio.event
 def connect_error():
@@ -71,7 +71,7 @@ def disconnect():
 
 @sio.on("led-design")
 def message_received(message):
-    print("message_received(message): received message")
+    print("[INFO] received message")
     request_json = json.loads(message)
     # with open("data/cgl.json", "w") as json_file:
     #     json.dump(request_json, json_file)
@@ -83,7 +83,7 @@ def message_received(message):
 
 @sio.on('*')
 def unhandled_event(event, sid, data):
-    print("caught an unhandled event")
+    print("[INFO] caught an unhandled event")
 
 
 """ Example usage

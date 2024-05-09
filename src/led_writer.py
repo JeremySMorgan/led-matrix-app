@@ -271,37 +271,33 @@ class LedWriter(LedWriterBase):
         self.strip.clear_strip()
 
     def draw_time(self):
-        if self.mode == CGL_MODE:
-            return
-
         cells = []
         t = datetime.now()
-        intensity = 1
+        intensity = 30
         # nighttime
         if t.hour < 5 or t.hour > 21:
             intensity = 1
-        else:
-            intensity = 50
 
         for i in range(t.hour):
             x = i
             y = N_LEDS_PER_DIM - 1
             cells.append(Cell(
                 r=intensity,
-                g=0,
-                b=0,
-                x=x, 
+                g=intensity,
+                b=intensity,
+                x=x,
                 y=y
             ))
 
-        # for i in range(t.minute):
-        for i in range(t.second):
-            x = i
-            y = N_LEDS_PER_DIM - 2 - floor(i / N_LEDS_PER_DIM)
+        max_width = 10
+        for i in range(t.minute):
+        # for i in range(t.second):
+            x = i % max_width
+            y = N_LEDS_PER_DIM - 3 - floor(i / max_width)
             cells.append(Cell(
-                r=0,
-                g=floor(intensity/2),
-                b=floor(intensity/2),
+                r=intensity,
+                g=intensity,
+                b=intensity,
                 x=x,
                 y=y
             ))
