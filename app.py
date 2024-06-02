@@ -70,15 +70,13 @@ def indicate_alive_thread():
 
     while True:
         # delete all directories with prefix
-        dirs = [f for f in os.listdir(dir_path) if os.path.isdir(os.path.join(dir_path, f))]
-        for subdir in dirs:
-            if subdir[0:len(prefix)] == prefix:
-                # rmdir is safe in that it won't delete a non empty directory - an error if dir contains files 
-                # 'OSError: [Errno 39] Directory not empty'
-                os.rmdir(os.path.join(dir_path, subdir))
+        files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
+        for file in files:
+            if file[0:len(prefix)] == prefix:
+                os.remove(os.path.join(dir_path, file))
         now_str = datetime.now().strftime('%d:%m:%Y__%H:%M:%S')
-        new_dir = os.path.join(dir_path, f'{prefix}__{now_str}/')
-        os.mkdir(new_dir)
+        new_file = os.path.join(dir_path, f'{prefix}__{now_str}')
+        open(new_file, "w").close()
         sleep(1)
 
 

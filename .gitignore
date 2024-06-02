@@ -5,3 +5,4 @@ __pycache__/
 example_requests/
 venv/
 log.txt
+is_alive/iaa_*

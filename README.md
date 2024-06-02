@@ -20,9 +20,21 @@ python3.6 -m pip install spidev flask adafruit-circuitpython-bitbangio adafruit-
 
 **Setup app to run on startup**
 
-Add the following line to *.bashrc*
+
+Better way:
+``` bash
+chmod +x run.sh
+
+# $ crontab -e
+@reboot /home/jm/Desktop/led-matrix-app/run.sh
+```
+
+
+
+Easy, bad way: Add the following line to *.bashrc*
 ```bash
-python3.6 <path>/<to>/led-matrix-app/app.py &
+alias ledmatrixquickstart="cd Desktop/led-matrix-app; source venv/bin/activate"
+source /home/jm/Desktop/led-matrix-app/venv/bin/activate && python3 /home/jm/Desktop/led-matrix-app/app.py >> /home/jm/Desktop/led-matrix-app/log.txt
 ```
 
 ## Development

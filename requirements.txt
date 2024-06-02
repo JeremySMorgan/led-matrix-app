@@ -26,7 +26,7 @@ python-socketio==5.11.0
 pytz==2024.1
 pyusb==1.2.1
 PyYAML==6.0.1
-requests==2.31.0
+requests==2.32.3
 RPi.GPIO==0.7.1
 rpi_ws281x==5.0.0
 simple-websocket==1.0.0
