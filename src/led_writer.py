@@ -273,18 +273,19 @@ class LedWriter(LedWriterBase):
     def draw_time(self):
         cells = []
         t = datetime.now()
+
         intensity = 30
-        # nighttime
         if t.hour < 5 or t.hour > 21:
-            intensity = 1
+            intensity = 2
 
         for i in range(t.hour):
             x = i
             y = N_LEDS_PER_DIM - 1
+            dbl = min(intensity*10 if (i%5 == 4 and i > 0) else intensity, 255)
             cells.append(Cell(
                 r=intensity,
                 g=intensity,
-                b=intensity,
+                b=dbl,
                 x=x,
                 y=y
             ))
@@ -294,10 +295,11 @@ class LedWriter(LedWriterBase):
         # for i in range(t.second):
             x = i % max_width
             y = N_LEDS_PER_DIM - 3 - floor(i / max_width)
+            dbl = min(intensity*10 if i in {10, 30, 50} else intensity, 255)
             cells.append(Cell(
                 r=intensity,
                 g=intensity,
-                b=intensity,
+                b=dbl,
                 x=x,
                 y=y
             ))

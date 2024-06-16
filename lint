@@ -1,5 +1,5 @@
 
 LINE_WIDTH=72
-python3.6 -m black *.py -l $LINE_WIDTH
-python3.6 -m black src/*.py -l $LINE_WIDTH
-python3.6 -m black examples/*.py -l $LINE_WIDTH
+python -m black *.py -l $LINE_WIDTH
+python -m black src/*.py -l $LINE_WIDTH
+python -m black examples/*.py -l $LINE_WIDTH

@@ -6,7 +6,7 @@ import os
 
 import socketio
 
-from src.utils import wait_for_internet
+from src.utils import wait_for_internet, logprint
 from src.led_writer import LedWriter, LedWriterSim
 
 sio = socketio.Client()
@@ -55,18 +55,18 @@ def clear_led_thread(delay: float):
     newest_request_t = request_t
     sleep(delay)
     if newest_request_t == request_t:
-        print("clear_led_thread(): clearing board")
+        logprint("clear_led_thread(): clearing board")
         led_writer.clear()
         led_writer.stop_cgl()
         board_is_active = False
     else:
-        print("clear_led_thread(): new request recieved during sleeping period, exiting with noops performed")
+        logprint("clear_led_thread(): new request recieved during sleeping period, exiting with noops performed")
 
 
 def indicate_alive_thread():
     dir_path = '/home/jm/Desktop/led-matrix-app/is_alive'
     prefix = 'iaa' # 'is alive at'
-    print(f"[INFO] starting indicate_alive_thread() to indicate liveliness")
+    logprint(f"[INFO] starting indicate_alive_thread() to indicate liveliness")
 
     while True:
         # delete all directories with prefix
@@ -82,20 +82,20 @@ def indicate_alive_thread():
 
 @sio.event
 def connect():
-    print("[INFO] connected")
+    logprint("[socket] connected")
 
 @sio.event
 def connect_error():
-    print('[INFO] Failed to connect to server.')
+    logprint('[socket] failed to connect to server.')
 
 @sio.event
 def disconnect():
-    print('[INFO] Disconnected from server.')
+    logprint('[socket] Disconnected from server.')
 
 
 @sio.on("led-design")
 def message_received(message):
-    print("[INFO] received message")
+    logprint("[socket] received message")
     request_json = json.loads(message)
     # with open("data/cgl.json", "w") as json_file:
     #     json.dump(request_json, json_file)
@@ -107,7 +107,7 @@ def message_received(message):
 
 @sio.on('*')
 def unhandled_event(event, sid, data):
-    print("[INFO] caught an unhandled event")
+    logprint(f"[socket] caught an unhandled event: '{event}'")
 
 
 """ Example usage
@@ -117,14 +117,15 @@ source /home/jm/Desktop/led-matrix-app/venv/bin/activate && python3 /home/jm/Des
 
 if __name__ == "__main__":
 
-    print(f"\n[INFO] started server at {datetime.now()}")
+    print("\n=====", flush=True)
+    logprint(f"[socket] started server")
     show_is_alive_thread = Thread(target=indicate_alive_thread)
     show_is_alive_thread.start()
 
     clk_thread = Thread(target=clock_thread)
     clk_thread.start()
 
-    print("SIM_MODE:", SIM_MODE)
+    logprint(f"SIM_MODE: {SIM_MODE}")
     if not SIM_MODE:
         wait_for_internet()
         led_writer.clear()
