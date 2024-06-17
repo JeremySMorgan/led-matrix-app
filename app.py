@@ -9,7 +9,6 @@ import socketio
 from src.utils import wait_for_internet, logprint
 from src.led_writer import LedWriter, LedWriterSim
 
-sio = socketio.Client()
 
 # SIM_MODE = True
 SIM_MODE = False
@@ -31,9 +30,11 @@ if not SIM_MODE:
 else:
     led_writer = LedWriterSim()
 
+sio = socketio.Client()
+
 newest_request_t = 0
 board_is_active = False
-
+was_disconnected = False
 
 def clock_thread():
     # shows the time when the board is inactive
@@ -90,6 +91,8 @@ def connect_error():
 
 @sio.event
 def disconnect():
+    global was_disconnected
+    was_disconnected = True
     logprint('[socket] Disconnected from server.')
 
 
@@ -127,11 +130,16 @@ if __name__ == "__main__":
 
     logprint(f"SIM_MODE: {SIM_MODE}")
     if not SIM_MODE:
-        wait_for_internet()
-        led_writer.clear()
-        sio.connect(HEROKU_HOSTNAME)
+
         while True:
-            sleep(1.0)
+            wait_for_internet()
+            was_disconnected = False
+            led_writer.clear()
+            sio.connect(HEROKU_HOSTNAME)
+            while True:
+                sleep(1.0)
+                if was_disconnected:
+                    logprint("[socket] detected that socket was disconnected. Attempting to reconnect")
     else:
         sio.connect("http://localhost:5001/")
         led_writer.run()
