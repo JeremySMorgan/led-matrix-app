@@ -30,7 +30,6 @@ if not SIM_MODE:
 else:
     led_writer = LedWriterSim()
 
-sio = socketio.Client()
 
 newest_request_t = 0
 board_is_active = False
@@ -81,36 +80,7 @@ def indicate_alive_thread():
         sleep(1)
 
 
-@sio.event
-def connect():
-    logprint("[socket] connected")
 
-@sio.event
-def connect_error():
-    logprint('[socket] failed to connect to server.')
-
-@sio.event
-def disconnect():
-    global was_disconnected
-    was_disconnected = True
-    logprint('[socket] Disconnected from server.')
-
-
-@sio.on("led-design")
-def message_received(message):
-    logprint("[socket] received message")
-    request_json = json.loads(message)
-    # with open("data/cgl.json", "w") as json_file:
-    #     json.dump(request_json, json_file)
-    led_writer.write_from_json(request_json)
-    thread = Thread(target=clear_led_thread, args=(CLEAR_TIME_SECS, ))
-    thread.start()
-    return {"status": "OK", "error": ""}
-
-
-@sio.on('*')
-def unhandled_event(event, sid, data):
-    logprint(f"[socket] caught an unhandled event: '{event}'")
 
 
 """ Example usage
@@ -135,11 +105,48 @@ if __name__ == "__main__":
             wait_for_internet()
             was_disconnected = False
             led_writer.clear()
+
+            sio = socketio.Client()
+
+            @sio.event
+            def connect():
+                logprint("[socket] connected")
+
+            @sio.event
+            def connect_error():
+                logprint('[socket] failed to connect to server.')
+
+            @sio.event
+            def disconnect():
+                global was_disconnected
+                was_disconnected = True
+                logprint('[socket] Disconnected from server.')
+
+
+            @sio.on("led-design")
+            def message_received(message):
+                logprint("[socket] received message")
+                request_json = json.loads(message)
+                # with open("data/cgl.json", "w") as json_file:
+                #     json.dump(request_json, json_file)
+                led_writer.write_from_json(request_json)
+                thread = Thread(target=clear_led_thread, args=(CLEAR_TIME_SECS, ))
+                thread.start()
+                return {"status": "OK", "error": ""}
+
+
+            @sio.on('*')
+            def unhandled_event(event, sid, data):
+                logprint(f"[socket] caught an unhandled event: '{event}'")
+
             sio.connect(HEROKU_HOSTNAME)
+
             while True:
                 sleep(1.0)
                 if was_disconnected:
                     logprint("[socket] detected that socket was disconnected. Attempting to reconnect")
+
     else:
+        sio = socketio.Client()
         sio.connect("http://localhost:5001/")
         led_writer.run()
