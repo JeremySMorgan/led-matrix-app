@@ -284,6 +284,8 @@ class LedWriter(LedWriterBase):
         self.last_cells = []
         self.cgl_curr_thread_idx = 0
         self.cgl_thread_should_kill = []
+        self.last_drawn_time = None
+        self.boot_time = time()
 
     def clear(self):
         """Clear the led matrix"""
@@ -293,22 +295,36 @@ class LedWriter(LedWriterBase):
         cells = []
         t = datetime.now()
 
+        # return if no need to draw
+        now_tup = (t.hour, t.minute)
+        # now_tup = (t.hour, t.second)
+        if (time() - self.boot_time) > 5 and now_tup == self.last_drawn_time:
+            return
+        self.last_drawn_time = now_tup
+
+
         intensity = 30
         if t.hour < 5 or t.hour >= 21:
             intensity = 2
 
+        hour_offset = 0
         for i in range(t.hour):
-            x = i
+            if i in {10, 20}:
+                hour_offset += 1
+            x = i + hour_offset
             y = N_LEDS_PER_DIM - 1
-            dbl = min(intensity * 10 if (i % 5 == 0) else intensity, 255)
+            dbl = min(intensity * 10 if (i % 10 == 0) else intensity, 255)
             cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
 
-        max_width = 10
+        max_width = 15
         for i in range(t.minute):
-            # for i in range(t.second):
+        # for i in range(t.second): # for debugging
             x = i % max_width
             y = N_LEDS_PER_DIM - 3 - floor(i / max_width)
-            dbl = min(intensity * 10 if i in {0, 20, 40} else intensity, 255)
+
+            dbl = min(intensity * 10 if x in {0, 5, 10} else intensity, 255)
+
+            # dbl = intensity
             cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
         self.write(cells)
 
