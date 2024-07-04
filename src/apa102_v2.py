@@ -2,6 +2,7 @@
 
 Source: https://github.com/tinue/apa102-pi/blob/main/apa102_pi/driver/apa102.py
 """
+
 from math import ceil
 import logging
 
@@ -12,8 +13,14 @@ import digitalio
 from adafruit_bus_device.spi_device import SPIDevice
 from microcontroller.pin import spiPorts
 
-RGB_MAP = {'rgb': [3, 2, 1], 'rbg': [3, 1, 2], 'grb': [2, 3, 1],
-           'gbr': [2, 1, 3], 'brg': [1, 3, 2], 'bgr': [1, 2, 3]}
+RGB_MAP = {
+    "rgb": [3, 2, 1],
+    "rbg": [3, 1, 2],
+    "grb": [2, 3, 1],
+    "gbr": [2, 1, 3],
+    "brg": [1, 3, 2],
+    "bgr": [1, 2, 3],
+}
 
 
 class APA102:
@@ -78,11 +85,22 @@ class APA102:
     zeroes to LED 1 as long as it takes for the last color frame to make it
     down the line to the last LED.
     """
+
     # Constants
     LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
 
-    def __init__(self, num_led=8, order='rgb', bus_method='spi', spi_bus=0, mosi=None, sclk=None, ce=None,
-                 bus_speed_hz=8000000, global_brightness=4):
+    def __init__(
+        self,
+        num_led=8,
+        order="rgb",
+        bus_method="spi",
+        spi_bus=0,
+        mosi=None,
+        sclk=None,
+        ce=None,
+        bus_speed_hz=8000000,
+        global_brightness=4,
+    ):
         """Initializes the library
 
         :param num_led: Number of LEDs in the strip
@@ -100,28 +118,51 @@ class APA102:
         logging.basicConfig(level=logging.DEBUG)
         spi_ports = {}
         for id_port, sclk_port, mosi_port, miso_port in spiPorts:
-            spi_ports[id_port] = {'SCLK': sclk_port, 'MOSI': mosi_port, 'MISO': miso_port}
+            spi_ports[id_port] = {
+                "SCLK": sclk_port,
+                "MOSI": mosi_port,
+                "MISO": miso_port,
+            }
 
         # Just in case someone use CAPS here.
         order = order.lower()
         bus_method = bus_method.lower()
 
-        self.check_input(bus_method, global_brightness, mosi, num_led, order, sclk, spi_bus, spi_ports)
+        self.check_input(
+            bus_method,
+            global_brightness,
+            mosi,
+            num_led,
+            order,
+            sclk,
+            spi_bus,
+            spi_ports,
+        )
 
         self.num_led = num_led
-        self.rgb = RGB_MAP.get(order, RGB_MAP['rgb'])
+        self.rgb = RGB_MAP.get(order, RGB_MAP["rgb"])
         self.global_brightness = global_brightness
         self.use_bitbang = False  # Two raw SPI devices exist: Bitbang (software) and hardware SPI.
-        self.use_ce = False  # If true, use the BusDevice abstraction layer on top of the raw SPI device
+        self.use_ce = (
+            False  # If true, use the BusDevice abstraction layer on top of the raw SPI device
+        )
 
-        self.leds = [self.LED_START, 0, 0, 0] * self.num_led  # Pixel buffer
+        self.leds = [
+            self.LED_START,
+            0,
+            0,
+            0,
+        ] * self.num_led  # Pixel buffer
 
-        if bus_method == 'spi':
+        if bus_method == "spi":
             selected = spi_ports[spi_bus]
-            self.spi = busio.SPI(clock=selected['SCLK'], MOSI=selected['MOSI'])
+            self.spi = busio.SPI(clock=selected["SCLK"], MOSI=selected["MOSI"])
 
-        elif bus_method == 'bitbang':
-            self.spi = bitbangio.SPI(clock=eval("board.D" + str(sclk)), MOSI=eval("board.D" + str(mosi)))
+        elif bus_method == "bitbang":
+            self.spi = bitbangio.SPI(
+                clock=eval("board.D" + str(sclk)),
+                MOSI=eval("board.D" + str(mosi)),
+            )
             self.use_bitbang = True
 
         if ce is not None:
@@ -152,21 +193,30 @@ class APA102:
             logging.debug("Use hardware SPI")
 
     @staticmethod
-    def check_input(bus_method, global_brightness, mosi, num_led, order, sclk, spi_bus, spi_ports):
+    def check_input(
+        bus_method,
+        global_brightness,
+        mosi,
+        num_led,
+        order,
+        sclk,
+        spi_bus,
+        spi_ports,
+    ):
         """
-        Checks the input values for validity
-1       """
+                Checks the input values for validity
+        1"""
         if num_led <= 0:
             raise ValueError("Illegal num_led can not be 0 or less")
         if num_led > 1024:
             raise ValueError("Illegal num_led only supported upto 1024 leds")
         if order not in RGB_MAP:
             raise ValueError("Illegal order not in %s" % list(RGB_MAP.keys()))
-        if bus_method not in ['spi', 'bitbang']:
+        if bus_method not in ["spi", "bitbang"]:
             raise ValueError("Illegal bus_method use spi or bitbang")
-        if bus_method == 'spi' and spi_bus not in spi_ports:
+        if bus_method == "spi" and spi_bus not in spi_ports:
             raise ValueError("Illegal spi_bus not in %s" % list(spi_ports))
-        if bus_method == 'bitbang' and mosi == sclk:
+        if bus_method == "bitbang" and mosi == sclk:
             raise ValueError("Illegal MOSI / SCLK can not be the same")
         if global_brightness < 0 or global_brightness > 31:
             raise ValueError("Illegal global_brightness min 0 max 31")
@@ -212,11 +262,11 @@ class APA102:
             self.send_to_spi([0x00])
 
     def set_global_brightness(self, brigtness):
-        """ Set the overall brightness of the strip."""
+        """Set the overall brightness of the strip."""
         self.global_brightness = brigtness
 
     def clear_strip(self):
-        """ Turns off the strip and shows the result right away."""
+        """Turns off the strip and shows the result right away."""
 
         for led in range(self.num_led):
             self.set_pixel(led, 0, 0, 0)
@@ -257,9 +307,13 @@ class APA102:
         Colors are passed combined (3 bytes concatenated)
         If brightness is not set the global brightness setting is used.
         """
-        self.set_pixel(led_num, (rgb_color & 0xFF0000) >> 16,
-                       (rgb_color & 0x00FF00) >> 8, rgb_color & 0x0000FF,
-                       bright_percent)
+        self.set_pixel(
+            led_num,
+            (rgb_color & 0xFF0000) >> 16,
+            (rgb_color & 0x00FF00) >> 8,
+            rgb_color & 0x0000FF,
+            bright_percent,
+        )
 
     def get_pixel(self, led_num):
         """Gets the color and brightness of one pixel in the LED stripe.

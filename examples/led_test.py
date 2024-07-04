@@ -18,13 +18,13 @@ def main(led_writer: LedWriter):
     while True:
 
         i = counter % n_leds
-        r = 128 +128 * sin(i * 2*pi/n_leds)
+        r = 128 + 128 * sin(i * 2 * pi / n_leds)
         g = 256 * (cos(i * 2 * pi / n_leds + 2 * pi / 3) ** 2)
         b = 0
         color = Cell(r=int(r), g=int(g), b=int(b), led_idx=i)
-        
+
         print(color)
-        
+
         colors.append(color)
 
         led_writer.write(colors)

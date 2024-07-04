@@ -31,7 +31,11 @@ while True:
 
     # Draw the square on the screen
     screen.fill((255, 255, 255))  # Fill the screen with white background
-    pygame.draw.rect(screen, square_color, (square_x, square_y, square_size, square_size))
+    pygame.draw.rect(
+        screen,
+        square_color,
+        (square_x, square_y, square_size, square_size),
+    )
 
     pygame.draw.line(screen, line_color, line_start, line_end, line_width)
 

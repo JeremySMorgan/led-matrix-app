@@ -17,9 +17,7 @@ def main(led_writer: LedWriter):
     led_writer.clear()
     n_leds = led_writer.num_leds
     n = 10
-    cells = [
-        Cell(x=0, y=0, r=0, g=0, b=0, led_idx=i) for i in range(n_leds)
-    ]
+    cells = [Cell(x=0, y=0, r=0, g=0, b=0, led_idx=i) for i in range(n_leds)]
 
     # Write color
     for led_idx in range(255):

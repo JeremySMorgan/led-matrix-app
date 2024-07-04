@@ -6,22 +6,15 @@ from math import floor
 
 from src.led_writer import LedWriter, Cell, N_LEDS_PER_DIM
 
-NUM_PIXLES = 28*28
-
+NUM_PIXLES = 28 * 28
 
 
 def snake():
 
-    for i in range(28*28):
+    for i in range(28 * 28):
         x = i
         y = N_LEDS_PER_DIM - 2 - floor(i / N_LEDS_PER_DIM)
-        cells = [Cell(
-            r=0,
-            g=255,
-            b=255,
-            x=x,
-            y=y
-        )]
+        cells = [Cell(r=0, g=255, b=255, x=x, y=y)]
         led_writer.write(cells)
     exit()
 
@@ -64,5 +57,5 @@ if __name__ == "__main__":
         # color = led_writer.strip.wheel(
         #             (((i << 8) // NUM_PIXLES) + j * 4) & 255
         #         )
-        #led_writer.strip.setPixelRGB(25, color)
-        #led_writer.strip.show()
+        # led_writer.strip.setPixelRGB(25, color)
+        # led_writer.strip.show()

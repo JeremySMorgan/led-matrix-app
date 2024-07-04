@@ -5,7 +5,7 @@ from time import sleep
 
 from src.led_writer import LedWriter
 
-NUM_PIXLES = 28*28
+NUM_PIXLES = 28 * 28
 
 """ Example usage
 
@@ -34,11 +34,9 @@ if __name__ == "__main__":
 
         sleep(1.0)
         led_writer.clear()
-            
+
         i = 15
         j = 5
-        color = led_writer.strip.wheel(
-                    (((i << 8) // NUM_PIXLES) + j * 4) & 255
-                )
-        #led_writer.strip.setPixelRGB(25, color)
-        #led_writer.strip.show()
+        color = led_writer.strip.wheel((((i << 8) // NUM_PIXLES) + j * 4) & 255)
+        # led_writer.strip.setPixelRGB(25, color)
+        # led_writer.strip.show()

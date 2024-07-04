@@ -9,6 +9,7 @@ import numpy as np
 
 N_LEDS_PER_DIM = 28
 
+
 @dataclass
 class Cell:
     r: int
@@ -35,13 +36,13 @@ class Cell:
         self.b = 0
 
     def __post_init__(self):
-       assert isinstance(self.led_idx, int)
-       assert isinstance(self.r, int)
-       assert isinstance(self.g, int)
-       assert isinstance(self.b, int)
-       assert 0 <= self.r <= 255
-       assert 0 <= self.g <= 255
-       assert 0 <= self.b <= 255
+        assert isinstance(self.led_idx, int)
+        assert isinstance(self.r, int)
+        assert isinstance(self.g, int)
+        assert isinstance(self.b, int)
+        assert 0 <= self.r <= 255
+        assert 0 <= self.g <= 255
+        assert 0 <= self.b <= 255
 
 
 def xy_to_led_idx(x: int, y: int) -> int:
@@ -75,6 +76,7 @@ def xy_to_led_idx(x: int, y: int) -> int:
         n = n0 + (N_LEDS_PER_DIM - x_mod - 1)
     return n
 
+
 # TODO: Create LedWriter class, and make a subclass for LedWriterHardware. provide a callback to write_from_json so that LedWriterHardware can write to the LED
 
 
@@ -84,7 +86,7 @@ RGB_MODE = "rgb"
 
 # TODO: consider applying a convolution filter instead of manually iterating
 def cgl_update_alive(alive: np.ndarray):
-    """ Rules:
+    """Rules:
     1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
     2. Any live cell with two or three live neighbors lives on to the next generation.
     3. Any live cell with more than three live neighbors dies, as if by overpopulation.
@@ -92,12 +94,15 @@ def cgl_update_alive(alive: np.ndarray):
     """
 
     alive_next = np.zeros_like(alive)
-    ncells = N_LEDS_PER_DIM 
+    ncells = N_LEDS_PER_DIM
 
     for x in range(ncells):
         for y in range(ncells):
 
-            neighbors = alive[ max(x - 1, 0): min(x+2, ncells), max(y-1, 0): min(y+2, ncells)]
+            neighbors = alive[
+                max(x - 1, 0) : min(x + 2, ncells),
+                max(y - 1, 0) : min(y + 2, ncells),
+            ]
 
             if alive[x, y]:
                 n_neighbors_alive = int(neighbors.sum() - 1)
@@ -116,13 +121,10 @@ def cgl_update_alive(alive: np.ndarray):
     return alive_next
 
 
-
-
 class LedWriterBase:
     def __init__(self):
         self.num_leds = N_LEDS_PER_DIM * N_LEDS_PER_DIM
         self.mode = RGB_MODE
-
 
 
 class LedWriterSim:
@@ -158,7 +160,11 @@ class LedWriterSim:
             for cell in self.state:
                 square_x = cell.x * px_per_led
                 square_y = screen_width - (cell.y * px_per_led) - px_per_led
-                pygame.draw.rect(screen, cell.color_tuple, (square_x, square_y, px_per_led, px_per_led))
+                pygame.draw.rect(
+                    screen,
+                    cell.color_tuple,
+                    (square_x, square_y, px_per_led, px_per_led),
+                )
 
             # Update the display
             pygame.display.flip()
@@ -188,7 +194,7 @@ class LedWriterSim:
 
         def calc_neighbors(pop):
             # return signal.convolve(pop, diag_kernel, mode='same')
-            return signal.convolve(pop, cross_kernel, mode='same')
+            return signal.convolve(pop, cross_kernel, mode="same")
 
         # TODO: reimplement, this currently isn't working correctly, [x][x][x] should oscilate
         while self.mode == CGL_MODE:
@@ -201,7 +207,11 @@ class LedWriterSim:
             empty_3n = np.logical_and(~populated, neighbors >= 3)
             pop_14n = np.logical_and(populated, np.logical_or(neighbors <= 1, neighbors >= 4))
             pop_23n = np.logical_and(populated, np.logical_or(neighbors == 2, neighbors == 3))
-            populated = np.where(pop_14n, 0, np.where(pop_23n, 1, np.where(empty_3n, 1, self)))
+            populated = np.where(
+                pop_14n,
+                0,
+                np.where(pop_23n, 1, np.where(empty_3n, 1, self)),
+            )
 
             new_state = []
             alive = np.nonzero(populated)
@@ -212,15 +222,14 @@ class LedWriterSim:
                 new_state.append(cell)
             self.state = new_state
 
-
     def write_from_json(self, json_data: Dict):
         """Parse a json of rgb values and write to the led matrix. json format:
-            { "data": [
-                {"r":0,"g":0,"b":0,"a":0,"x":0,"y":0},
-                ...
-                {"r":0,"g":0,"b":0,"a":0,"x":27,"y":27}
-                ]
-            }
+        { "data": [
+            {"r":0,"g":0,"b":0,"a":0,"x":0,"y":0},
+            ...
+            {"r":0,"g":0,"b":0,"a":0,"x":27,"y":27}
+            ]
+        }
         """
         self.new_data_received = True
         new_state = []
@@ -229,7 +238,14 @@ class LedWriterSim:
             g = int(data["g"])
             b = int(data["b"])
             if r > 0 or g > 0 or b > 0:
-                cell = Cell(r=r, g=g, b=b, x=int(data['x']), y=int(data['y']),  led_idx=0)
+                cell = Cell(
+                    r=r,
+                    g=g,
+                    b=b,
+                    x=int(data["x"]),
+                    y=int(data["y"]),
+                    led_idx=0,
+                )
                 new_state.append(cell)
         self.state = new_state
 
@@ -239,8 +255,6 @@ class LedWriterSim:
                 thread.start()
 
         self.mode = json_data["mode"]
-
-
 
 
 class LedWriter(LedWriterBase):
@@ -253,15 +267,20 @@ class LedWriter(LedWriterBase):
         # bus_speed_hz=6000000   # infrequent flickering
         # bus_speed_hz=4000000   # no flickering
         # bus_speed_hz=1500000 # no flickering
-        bus_speed_hz=5000000   # no flickering
+        bus_speed_hz = 5000000  # no flickering
 
-
-        global_brightness=5
+        global_brightness = 5
 
         self.strip = apa102_v2.APA102(
-            num_led=self.num_leds, bus_method='spi', spi_bus=0, mosi=None, sclk=None, ce=None,
-            bus_speed_hz=bus_speed_hz, global_brightness=global_brightness
-            )
+            num_led=self.num_leds,
+            bus_method="spi",
+            spi_bus=0,
+            mosi=None,
+            sclk=None,
+            ce=None,
+            bus_speed_hz=bus_speed_hz,
+            global_brightness=global_brightness,
+        )
         self.last_cells = []
         self.cgl_curr_thread_idx = 0
         self.cgl_thread_should_kill = []
@@ -281,34 +300,20 @@ class LedWriter(LedWriterBase):
         for i in range(t.hour):
             x = i
             y = N_LEDS_PER_DIM - 1
-            dbl = min(intensity*10 if (i%5 == 0) else intensity, 255)
-            cells.append(Cell(
-                r=intensity,
-                g=intensity,
-                b=dbl,
-                x=x,
-                y=y
-            ))
+            dbl = min(intensity * 10 if (i % 5 == 0) else intensity, 255)
+            cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
 
         max_width = 10
         for i in range(t.minute):
-        # for i in range(t.second):
+            # for i in range(t.second):
             x = i % max_width
             y = N_LEDS_PER_DIM - 3 - floor(i / max_width)
-            dbl = min(intensity*10 if i in {0, 20, 40} else intensity, 255)
-            cells.append(Cell(
-                r=intensity,
-                g=intensity,
-                b=dbl,
-                x=x,
-                y=y
-            ))
+            dbl = min(intensity * 10 if i in {0, 20, 40} else intensity, 255)
+            cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
         self.write(cells)
 
-
     def write(self, cells: List[Cell], debug_timing: bool = False):
-        """Write to the led matrix.
-        """
+        """Write to the led matrix."""
         # clear previous
         for cell in self.last_cells:
             self.strip.set_pixel(cell.led_idx, 0, 0, 0)
@@ -326,13 +331,10 @@ class LedWriter(LedWriterBase):
             print("strip.show():    ", time() - t0)
         self.last_cells = cells
 
-
     def update_buffer(self, cells):
         for cell in cells:
             assert isinstance(cell, Cell)
             self.strip.setPixel(cell.led_idx, cell.r, cell.b, cell.g)
-
-
 
     def cgl_update_thread(self, initial_cells: List[Cell], thread_idx: int):
 
@@ -343,7 +345,6 @@ class LedWriter(LedWriterBase):
             for x, y in zip(alives[0], alives[1]):
                 cells.append(Cell(r=255, g=255, b=255, x=int(x), y=int(y)))
             self.write(cells)
-
 
         alive = np.zeros((N_LEDS_PER_DIM, N_LEDS_PER_DIM), dtype=np.bool_)
         for cell in initial_cells:
@@ -364,12 +365,12 @@ class LedWriter(LedWriterBase):
 
     def write_from_json(self, json_data: Dict):
         """Parse a json of rgb values and write to the led matrix. json format:
-            { "data": [
-                {"r":0,"g":0,"b":0,"a":0,"x":0,"y":0},
-                ...
-                {"r":0,"g":0,"b":0,"a":0,"x":27,"y":27}
-                ]
-            }
+        { "data": [
+            {"r":0,"g":0,"b":0,"a":0,"x":0,"y":0},
+            ...
+            {"r":0,"g":0,"b":0,"a":0,"x":27,"y":27}
+            ]
+        }
         """
         cells = []
         for data in json_data["data"]:
@@ -377,7 +378,7 @@ class LedWriter(LedWriterBase):
             g = int(data["g"])
             b = int(data["b"])
             if r > 0 or g > 0 or b > 0:
-                cell = Cell(r=r, g=g, b=b, x=int(data['x']), y=int(data['y']))
+                cell = Cell(r=r, g=g, b=b, x=int(data["x"]), y=int(data["y"]))
                 cells.append(cell)
 
         if json_data["mode"] == CGL_MODE:
@@ -389,7 +390,10 @@ class LedWriter(LedWriterBase):
 
             # start new cgl thread
             self.cgl_thread_should_kill.append(False)
-            thread = Thread(target=self.cgl_update_thread, args=(cells, self.cgl_curr_thread_idx))
+            thread = Thread(
+                target=self.cgl_update_thread,
+                args=(cells, self.cgl_curr_thread_idx),
+            )
             thread.start()
             self.cgl_curr_thread_idx += 1
 

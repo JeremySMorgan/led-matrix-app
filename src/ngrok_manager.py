@@ -4,9 +4,9 @@ import time
 
 from pyngrok import ngrok
 
+
 def ngrok_process_is_running() -> bool:
-    """ Returns true if an ngrok process is running
-    """
+    """Returns true if an ngrok process is running"""
     url = "http://localhost:4040/api/tunnels/"
     try:
         res = requests.get(url)
@@ -21,8 +21,9 @@ def ngrok_process_is_running() -> bool:
 
 """
 
+
 class NgrokManager:
-    
+
     def __init__(self, port: int):
         """
         Args
@@ -32,30 +33,29 @@ class NgrokManager:
         self.tunnel = None
 
     def start_tunnel(self):
-        """ Start a ngrok tunnel
-        """
+        """Start a ngrok tunnel"""
         print("NgrokManager.start_tunnel(): starting tunnel")
         self.tunnel = ngrok.connect(addr=self._port)
 
     def stop_tunnel(self):
-        """ Kill the current running ngrok tunnels
-        """
+        """Kill the current running ngrok tunnels"""
         print("NgrokManager.stop_tunnel():  stopping tunnel")
         if self.tunnel is None:
             return
         for tunnel in ngrok.get_tunnels():
             ngrok.disconnect(tunnel.public_url)
         self.tunnel = None
-    
+
     def get_public_hostname(self):
-        """ Return the public url of the ngrok process running with the 
-        port specified in the parameterized config. Returns none if no 
-        process is running. 
+        """Return the public url of the ngrok process running with the
+        port specified in the parameterized config. Returns none if no
+        process is running.
         """
         if self.tunnel is None:
             return None
         return self.tunnel.public_url
-        
+
+
 if __name__ == "__main__":
     nm = NgrokManager(5000)
     nm.start_tunnel()
@@ -66,4 +66,3 @@ if __name__ == "__main__":
         nm.stop_tunnel()
         nm.start_tunnel()
         print("new hostname:    ", nm.get_public_hostname())
-        

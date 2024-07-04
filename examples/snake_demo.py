@@ -20,9 +20,7 @@ def main(led_writer: LedWriter):
     snake_length = 150
     tail = -snake_length
 
-    cells = [
-        Cell(x=0, y=0, r=0, g=0, b=0, led_idx=i) for i in range(n_leds)
-    ]
+    cells = [Cell(x=0, y=0, r=0, g=0, b=0, led_idx=i) for i in range(n_leds)]
 
     while True:
 

@@ -17,11 +17,11 @@ SIM_MODE = False
 HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 
 BRIGHTNESS = 10
-CLEAR_TIME_SECS = 15.0*60.0 # Clear led matrix 15 minutes after a new design is received
+CLEAR_TIME_SECS = 15.0 * 60.0  # Clear led matrix 15 minutes after a new design is received
 # CLEAR_TIME_SECS = 10
 
-# TODO: there is an issue where the server doesn't reconnect when the internet goes down, or something like that. should 
-# always check to see if a connection is maintained, and try to reconnect if not. 
+# TODO: there is an issue where the server doesn't reconnect when the internet goes down, or something like that. should
+# always check to see if a connection is maintained, and try to reconnect if not.
 # TODO also: - show a green square when connected, red square when disconnected
 # TODO: quit if another app.py process is running
 
@@ -33,7 +33,8 @@ else:
 
 newest_request_t = 0
 board_is_active = False
-was_disconnected = False
+am_connected = False
+
 
 def clock_thread():
     # shows the time when the board is inactive
@@ -46,7 +47,7 @@ def clock_thread():
 
 
 def clear_led_thread(delay: float):
-    """Function that clears the led every `CLEAR_TIME_SECS` seconds. 
+    """Function that clears the led every `CLEAR_TIME_SECS` seconds.
     Function is blocking so should be called in its own thread
     """
     global newest_request_t, board_is_active
@@ -60,27 +61,26 @@ def clear_led_thread(delay: float):
         led_writer.stop_cgl()
         board_is_active = False
     else:
-        logprint("clear_led_thread(): new request recieved during sleeping period, exiting with noops performed")
+        logprint(
+            "clear_led_thread(): new request recieved during sleeping period, exiting with noops performed"
+        )
 
 
 def indicate_alive_thread():
-    dir_path = '/home/jm/Desktop/led-matrix-app/is_alive'
-    prefix = 'iaa' # 'is alive at'
+    dir_path = "/home/jm/Desktop/led-matrix-app/is_alive"
+    prefix = "iaa"  # 'is alive at'
     logprint(f"[INFO] starting indicate_alive_thread() to indicate liveliness")
 
     while True:
         # delete all directories with prefix
         files = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
         for file in files:
-            if file[0:len(prefix)] == prefix:
+            if file[0 : len(prefix)] == prefix:
                 os.remove(os.path.join(dir_path, file))
-        now_str = datetime.now().strftime('%d:%m:%Y__%H:%M:%S')
-        new_file = os.path.join(dir_path, f'{prefix}__{now_str}')
+        now_str = datetime.now().strftime("%d:%m:%Y__%H:%M:%S")
+        new_file = os.path.join(dir_path, f"{prefix}__{now_str}")
         open(new_file, "w").close()
         sleep(1)
-
-
-
 
 
 """ Example usage
@@ -103,25 +103,25 @@ if __name__ == "__main__":
 
         while True:
             wait_for_internet()
-            was_disconnected = False
             led_writer.clear()
 
             sio = socketio.Client()
 
             @sio.event
             def connect():
+                global am_connected
+                am_connected = True
                 logprint("[socket] connected")
 
             @sio.event
             def connect_error():
-                logprint('[socket] failed to connect to server.')
+                logprint("[socket] failed to connect to server.")
 
             @sio.event
             def disconnect():
-                global was_disconnected
-                was_disconnected = True
-                logprint('[socket] Disconnected from server.')
-
+                global am_connected
+                am_connected = False
+                logprint("[socket] Disconnected from server.")
 
             @sio.on("led-design")
             def message_received(message):
@@ -130,21 +130,23 @@ if __name__ == "__main__":
                 # with open("data/cgl.json", "w") as json_file:
                 #     json.dump(request_json, json_file)
                 led_writer.write_from_json(request_json)
-                thread = Thread(target=clear_led_thread, args=(CLEAR_TIME_SECS, ))
+                thread = Thread(target=clear_led_thread, args=(CLEAR_TIME_SECS,))
                 thread.start()
                 return {"status": "OK", "error": ""}
 
-
-            @sio.on('*')
+            @sio.on("*")
             def unhandled_event(event, sid, data):
                 logprint(f"[socket] caught an unhandled event: '{event}'")
 
             sio.connect(HEROKU_HOSTNAME)
 
             while True:
-                sleep(1.0)
-                if was_disconnected:
-                    logprint("[socket] detected that socket was disconnected. Attempting to reconnect")
+                sleep(5.0)
+                if not am_connected:
+                    logprint(
+                        "[socket] detected that socket was disconnected. Attempting to reconnect"
+                    )
+                    break
 
     else:
         sio = socketio.Client()
