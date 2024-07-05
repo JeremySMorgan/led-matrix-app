@@ -19,6 +19,7 @@ HEROKU_HOSTNAME = "http://jeremysmorgan.herokuapp.com"
 BRIGHTNESS = 10
 CLEAR_TIME_SECS = 15.0 * 60.0  # Clear led matrix 15 minutes after a new design is received
 # CLEAR_TIME_SECS = 10
+SOCKET_RECONNECT_TIME_SECS = 10 * 60 # 10 minutes
 
 # TODO: there is an issue where the server doesn't reconnect when the internet goes down, or something like that. should
 # always check to see if a connection is maintained, and try to reconnect if not.
@@ -33,7 +34,7 @@ else:
 
 newest_request_t = 0
 board_is_active = False
-am_connected = False
+# am_connected = False
 
 
 def clock_thread():
@@ -66,6 +67,7 @@ def clear_led_thread(delay: float):
         )
 
 
+# this function is dumb. Should have stuck with ./list_active_processes
 def indicate_alive_thread():
     dir_path = "/home/jm/Desktop/led-matrix-app/is_alive"
     prefix = "iaa"  # 'is alive at'
@@ -109,8 +111,8 @@ if __name__ == "__main__":
 
             @sio.event
             def connect():
-                global am_connected
-                am_connected = True
+                # global am_connected
+                # am_connected = True
                 logprint("[socket] connected")
 
             @sio.event
@@ -119,8 +121,8 @@ if __name__ == "__main__":
 
             @sio.event
             def disconnect():
-                global am_connected
-                am_connected = False
+                # global am_connected
+                # am_connected = False
                 logprint("[socket] Disconnected from server.")
 
             @sio.on("led-design")
@@ -139,14 +141,10 @@ if __name__ == "__main__":
                 logprint(f"[socket] caught an unhandled event: '{event}'")
 
             sio.connect(HEROKU_HOSTNAME)
+            sleep(SOCKET_RECONNECT_TIME_SECS)
+            logprint(f"disconnecting from socket")
+            sio.disconnect()
 
-            while True:
-                sleep(5.0)
-                if not am_connected:
-                    logprint(
-                        "[socket] detected that socket was disconnected. Attempting to reconnect"
-                    )
-                    break
 
     else:
         sio = socketio.Client()
