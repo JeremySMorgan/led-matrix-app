@@ -294,38 +294,61 @@ class LedWriter(LedWriterBase):
     def draw_time(self):
         cells = []
         t = datetime.now()
+        hour_24 = t.hour
+        hour = t.hour % 12
 
         # return if no need to draw
-        now_tup = (t.hour, t.minute)
-        # now_tup = (t.hour, t.second)
+        now_tup = (hour, t.minute)
+        # now_tup = (hour, t.second)
         if (time() - self.boot_time) > 5 and now_tup == self.last_drawn_time:
             return
         self.last_drawn_time = now_tup
 
 
         intensity = 30
-        if t.hour < 5 or t.hour >= 21:
+        if hour_24 < 5 or hour_24 >= 21:
             intensity = 2
 
+        # set hour
         hour_offset = 0
-        for i in range(t.hour):
-            if i in {10, 20}:
+        for i in range(hour):
+            if i in {5, 10}:
                 hour_offset += 1
             x = i + hour_offset
             y = N_LEDS_PER_DIM - 1
-            dbl = min(intensity * 10 if (i % 10 == 0) else intensity, 255)
+            dbl = min(intensity * 10 if (i % 5 == 0) else intensity, 255)
             cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
 
+
+
+        # set minutes
+        space_idxs = {5, 10}
+        last_y = None
         max_width = 15
+        minute_offset = 0
+
         for i in range(t.minute):
         # for i in range(t.second): # for debugging
-            x = i % max_width
+
             y = N_LEDS_PER_DIM - 3 - floor(i / max_width)
+            if last_y is None:
+                last_y = y
 
-            dbl = min(intensity * 10 if x in {0, 5, 10} else intensity, 255)
+            if last_y != y:
+                minute_offset = 0
+                last_y = y
 
-            # dbl = intensity
+            x_unshifted =  (i % max_width)
+            if x_unshifted in space_idxs:
+                minute_offset += 1
+
+            x = x_unshifted + minute_offset
+
+            # dbl = min(intensity * 10 if x_unshifted in {0, 5, 10} else intensity, 255)
+            dbl = intensity
+
             cells.append(Cell(r=intensity, g=intensity, b=dbl, x=x, y=y))
+
         self.write(cells)
 
     def write(self, cells: List[Cell], debug_timing: bool = False):

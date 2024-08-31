@@ -104,16 +104,16 @@ if __name__ == "__main__":
     if not SIM_MODE:
 
         while True:
+            # sleep(100)
             wait_for_internet()
             led_writer.clear()
 
-            sio = socketio.Client()
+            # sio = socketio.Client(logger=True, engineio_logger=True)
+            sio = socketio.Client(logger=True, engineio_logger=False)
 
             @sio.event
             def connect():
-                # global am_connected
-                # am_connected = True
-                logprint("[socket] connected")
+                logprint(f"[socket] connected. id: {sio.sid}, transport: {sio.transport}")
 
             @sio.event
             def connect_error():
@@ -141,8 +141,15 @@ if __name__ == "__main__":
                 logprint(f"[socket] caught an unhandled event: '{event}'")
 
             sio.connect(HEROKU_HOSTNAME)
-            sleep(SOCKET_RECONNECT_TIME_SECS)
-            logprint(f"disconnecting from socket")
+
+            # n_pings = 10 
+            # for i in range(n_pings):
+            #     sio.emit('keep-alive ping', {'foo': 'bar'})
+            #     sleep(SOCKET_RECONNECT_TIME_SECS / n_pings)
+            logprint(f"starting 'sio.wait()'")
+            sio.wait()
+
+            logprint(f"ended 'sio.wait()', attempting to reconnect")
             sio.disconnect()
 
 
